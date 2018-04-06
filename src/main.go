@@ -3,6 +3,7 @@ package main
 import (
 	"./TransportData"
 	"github.com/tarm/serial"
+	"strconv"
 )
 
 func main() {
@@ -23,8 +24,13 @@ func main() {
 			}
 
 			if scalePort != nil && rulerPort != nil {
-				TransportData.ParseScaleData(scaleResponse)
-				TransportData.ParseRulerData(rulerResponse)
+				weightBox := TransportData.ParseScaleData(scaleResponse)
+				widthBox, heightBox, lengthBox := TransportData.ParseRulerData(rulerResponse)
+
+				println("Вес коробки: " + strconv.Itoa(weightBox))
+				println("Ширина коробки: " + strconv.Itoa(widthBox))
+				println("Высота коробки: " + strconv.Itoa(heightBox))
+				println("Длинна коробки: " + strconv.Itoa(lengthBox))
 			}
 		}
 	}
