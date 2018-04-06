@@ -61,6 +61,7 @@ func FindScale(portName string) (port *serial.Port) {
 		return nil
 	} else {
 		if n == 2 && buf[0] == 128 {
+			println("Весы подключены к порту " + portName)
 			return port
 		} else {
 			return nil
@@ -96,6 +97,7 @@ func FindRuler(portName string) (port *serial.Port) {
 		return nil
 	} else {
 		if n == 5 && buf[0] == 127 {
+			println("Линейка подключена к порту " + portName)
 			return port
 		} else {
 			return nil

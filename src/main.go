@@ -27,7 +27,7 @@ func main() {
 				weightBox := TransportData.ParseScaleData(scaleResponse)
 				widthBox, heightBox, lengthBox := TransportData.ParseRulerData(rulerResponse)
 
-				println("Вес коробки: " + strconv.Itoa(weightBox))
+				println("Вес коробки: " + strconv.FormatFloat(weightBox, 'E', -1, 64))
 				println("Ширина коробки: " + strconv.Itoa(widthBox))
 				println("Высота коробки: " + strconv.Itoa(heightBox))
 				println("Длинна коробки: " + strconv.Itoa(lengthBox))

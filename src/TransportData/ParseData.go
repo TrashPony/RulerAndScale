@@ -1,6 +1,6 @@
 package TransportData
 
-func ParseScaleData(data *ScaleResponse) (weightBox int) {
+func ParseScaleData(data *ScaleResponse) (weightBox float64) {
 	/*
 	   80 00
 	   EC 00
@@ -18,24 +18,24 @@ func ParseScaleData(data *ScaleResponse) (weightBox int) {
 
 		if data.ReadyAndDiscreteness[1] == 0 {
 			if  data.Weight[1] == 0 { // вес уместился в 1н байт
-				weightBox = int(data.Weight[0]) * 1
+				weightBox = float64(data.Weight[0]) * 1
 				return
 			}
 
 			if data.Weight[1] != 0 { // не уместился
-				weightBox = ((256 * int(data.Weight[1])) + int(data.Weight[0])) * 1
+				weightBox = ((256 * float64(data.Weight[1])) + float64(data.Weight[0])) * 1
 				return
 			}
 		}
 
 		if data.ReadyAndDiscreteness[1] == 4 {
 			if  data.Weight[1] == 0 { // вес уместился в 1н байт
-				weightBox = int(data.Weight[0]) * 0.01
+				weightBox = float64(data.Weight[0]) * 0.01
 				return
 			}
 
 			if data.Weight[1] != 0 { // не уместился
-				weightBox = ((256 * int(data.Weight[1])) + int(data.Weight[0])) * 0.01
+				weightBox = ((256 * float64(data.Weight[1])) + float64(data.Weight[0])) * 0.01
 				return
 			}
 		}
