@@ -1,4 +1,4 @@
-package Ports
+package TransportData
 
 import (
 	"github.com/tarm/serial"
@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func SelectPort() (weightPort *serial.Port, rulerPort *serial.Port) {
+func SelectPort() (scalePort *serial.Port, rulerPort *serial.Port) {
 
 	portClass := []string{"/dev/ttyS", "/dev/ttyACM", "/dev/ttyUSB"}
 
@@ -16,15 +16,15 @@ func SelectPort() (weightPort *serial.Port, rulerPort *serial.Port) {
 
 				portName := nameClass + strconv.Itoa(i)
 
-				if weightPort == nil {
-					weightPort = FindWeight(portName)
+				if scalePort == nil {
+					scalePort = FindScale(portName)
 				}
 
 				if rulerPort == nil {
 					rulerPort = FindRuler(portName)
 				}
 
-				if weightPort != nil && rulerPort != nil {
+				if scalePort != nil && rulerPort != nil {
 					println("Все устройства подключены.")
 					return
 				}
@@ -33,7 +33,7 @@ func SelectPort() (weightPort *serial.Port, rulerPort *serial.Port) {
 	}
 }
 
-func FindWeight(portName string) (port *serial.Port) {
+func FindScale(portName string) (port *serial.Port) {
 	weightConfig := &serial.Config{Name: portName,
 		Baud: 4800,
 		Parity: 'E',
@@ -45,9 +45,7 @@ func FindWeight(portName string) (port *serial.Port) {
 		return nil
 	}
 
-	command := []byte{0x45}
-
-	_, err = port.Write(command)
+	_, err = port.Write([]byte{0x45})
 	if err != nil {
 		port.Close()
 		return nil
@@ -82,9 +80,7 @@ func FindRuler(portName string) (port *serial.Port) {
 		return nil
 	}
 
-	command := []byte{0x95}
-
-	_, err = port.Write(command)
+	_, err = port.Write([]byte{0x95})
 	if err != nil {
 		port.Close()
 		return nil
