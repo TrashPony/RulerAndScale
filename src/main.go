@@ -7,9 +7,9 @@ import (
 )
 
 func main() {
-	for {
-		var scalePort, rulerPort *serial.Port
+	var scalePort, rulerPort *serial.Port
 
+	for {
 		if scalePort == nil || rulerPort == nil {
 			scalePort, rulerPort = TransportData.SelectPort()
 		} else {

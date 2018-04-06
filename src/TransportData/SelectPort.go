@@ -45,7 +45,7 @@ func FindScale(portName string) (port *serial.Port) {
 		return nil
 	}
 
-	_, err = port.Write([]byte{0x45})
+	_, err = port.Write([]byte{0x48})
 	if err != nil {
 		port.Close()
 		return nil
