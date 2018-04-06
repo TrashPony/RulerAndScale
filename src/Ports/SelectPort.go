@@ -24,7 +24,7 @@ func SelectPort() (weightPort *serial.Port, rulerPort *serial.Port) {
 				if rulerPort == nil {
 					rulerPort = FindRuler(portName)
 				}
-				
+
 				if weightPort != nil && rulerPort != nil {
 					println("Все устройства подключены.")
 					return
@@ -37,7 +37,8 @@ func SelectPort() (weightPort *serial.Port, rulerPort *serial.Port) {
 func FindWeight(portName string) (port *serial.Port) {
 	weightConfig := &serial.Config{Name: portName,
 		Baud: 4800,
-		Parity: 'E'}
+		Parity: 'E',
+		ReadTimeout: time.Millisecond * 200}
 
 	port, err := serial.OpenPort(weightConfig)
 
