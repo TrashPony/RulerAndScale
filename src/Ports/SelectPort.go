@@ -10,7 +10,6 @@ func SelectPort() (weightPort *serial.Port, rulerPort *serial.Port) {
 
 	portClass := []string{"/dev/ttyS", "/dev/ttyACM", "/dev/ttyUSB"}
 
-
 	for {
 		for _, nameClass := range portClass {
 			for i := 0; i < 10; i++ {
@@ -38,7 +37,7 @@ func FindWeight(portName string) (port *serial.Port) {
 	weightConfig := &serial.Config{Name: portName,
 		Baud: 4800,
 		Parity: 'E',
-		ReadTimeout: time.Millisecond * 200}
+		ReadTimeout: time.Millisecond * 100}
 
 	port, err := serial.OpenPort(weightConfig)
 
@@ -54,16 +53,16 @@ func FindWeight(portName string) (port *serial.Port) {
 		return nil
 	}
 
-	buf := make([]byte, 2)
+	time.Sleep(time.Millisecond * 100)
 
+	buf := make([]byte, 2)
 	n, err := port.Read(buf)
 
 	if err != nil {
 		port.Close()
 		return nil
 	} else {
-		if n == 2 {
-			println(n)
+		if n == 2 && buf[0] == 128 {
 			return port
 		} else {
 			return nil
@@ -74,8 +73,8 @@ func FindWeight(portName string) (port *serial.Port) {
 func FindRuler(portName string) (port *serial.Port) {
 
 	rulerConfig := &serial.Config{Name: portName,
-		Baud: 9600,
-		ReadTimeout: time.Millisecond * 200}
+		Baud: 115200,
+		ReadTimeout: time.Millisecond * 100}
 
 	port, err := serial.OpenPort(rulerConfig)
 
@@ -91,16 +90,16 @@ func FindRuler(portName string) (port *serial.Port) {
 		return nil
 	}
 
-	buf := make([]byte, 5)
+	time.Sleep(time.Millisecond * 100)
 
+	buf := make([]byte, 5)
 	n, err := port.Read(buf)
 
 	if err != nil {
 		port.Close()
 		return nil
 	} else {
-		if n == 5 {
-			println(n)
+		if n == 5 && buf[0] == 127 {
 			return port
 		} else {
 			return nil
