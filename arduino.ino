@@ -14,7 +14,7 @@
 
 #define TOP_MAX          73
 #define WIDTH_MAX        100
-#define LENGTH_MAX       62
+#define LENGTH_MAX       60
 
 boolean passWidthBox = false;
 boolean passHeightBox = false;
@@ -55,6 +55,7 @@ void loop() {
       Serial.write(0x7F);
       Serial.write(0x7F);
       Serial.write(0x7F);
+      Serial.flush();
     }
 
     // запрос ширины
@@ -197,7 +198,7 @@ void Indication() {
 }
 
 boolean PassedIndication (int &lastIndication, int &indication, int &queueIndications) {
-
+// TODO добавить проверку на максимальное и отрицательные значения
   if (debug) {
     Serial.print("queueIndications ");
     Serial.println(queueIndications);

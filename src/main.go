@@ -47,6 +47,8 @@ func Controller()  {
 					println("Высота коробки: " + strconv.Itoa(heightBox))
 					println("Длинна коробки: " + strconv.Itoa(lengthBox))
 					println("-------------------")
+				} else {
+					//println("не откалиброван")
 				}
 			}
 		}

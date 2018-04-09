@@ -21,7 +21,15 @@ func (p *Port) Connect () (connect *serial.Port)   {
 }
 
 func (p *Port) SendBytes(command []byte, countRead int) (data []byte)  {
+
+	errorCount := 0
+
 	for {
+
+		if errorCount >= 5 {
+			return nil
+		}
+
 		if p.Connection == nil {
 			println("ошибка повторного подключения")
 			return nil
@@ -31,7 +39,8 @@ func (p *Port) SendBytes(command []byte, countRead int) (data []byte)  {
 
 		_, err := p.Connection.Write(command)
 		if err != nil {
-			println("ошибка записи")
+			println("ошибка записи" + err.Error())
+			errorCount++
 			p.Connection.Close()
 			p.Connection = p.Connect()
 			continue
@@ -43,6 +52,7 @@ func (p *Port) SendBytes(command []byte, countRead int) (data []byte)  {
 		if err != nil {
 			println("ошибка чтения: " + err.Error())
 			p.Connection.Close()
+			errorCount++
 			p.Connection = p.Connect()
 			continue
 		}
