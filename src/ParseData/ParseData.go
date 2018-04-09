@@ -1,6 +1,9 @@
-package TransportData
+package ParseData
 
-func ParseScaleData(data *ScaleResponse) (weightBox float64) {
+import 	"../TransportData"
+
+
+func ParseScaleData(data *TransportData.ScaleResponse) (weightBox float64) {
 	/*
 	   80 00
 	   EC 00
@@ -44,7 +47,7 @@ func ParseScaleData(data *ScaleResponse) (weightBox float64) {
 	return
 }
 
-func ParseRulerData(data *RulerResponse) (widthBox, heightBox, lengthBox int) {
+func ParseRulerData(data *TransportData.RulerResponse) (widthBox, heightBox, lengthBox int) {
 
 	/*
 	команда 0x95, ответ 0x7F - успешное подключение к устройству
