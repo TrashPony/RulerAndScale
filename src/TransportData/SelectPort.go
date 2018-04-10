@@ -9,7 +9,7 @@ import (
 
 
 func SelectPort() (scalePort *Port, rulerPort *Port) {
-
+	println("Поиск портов")
 	portClass := []string{"/dev/ttyS", "/dev/ttyACM", "/dev/ttyUSB"}
 
 	for {
