@@ -11,3 +11,4 @@ Arduino:
 Go: 
 1) в файле SelectPort переменная portClass указывает какие типы портов сканировать а цикл for задает колво 
 по умолчанию "/dev/ttyS", "/dev/ttyACM", "/dev/ttyUSB", от 0 до 9го порта
+![Image alt](https://github.com/TrashPony/RulerAndScale/raw/master/image.png)
