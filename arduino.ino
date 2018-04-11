@@ -1,13 +1,17 @@
 #include <NewPing.h>
 
+// Дальномер
 #define LEFT_PING_PIN  13
 #define TOP_PING_PIN   12
 #define BACK_PING_PIN  11
 #define RIGHT_PING_PIN 10
 
+// Пищалка
+#define LED_PIN  9
+
 #define TOP_MAX          74
 #define WIDTH_MAX        100
-#define LENGTH_MAX       60
+#define LENGTH_MAX       58
 
 boolean passWidthBox = false;
 boolean passHeightBox = false;
@@ -31,11 +35,15 @@ NewPing rightSonar(RIGHT_PING_PIN, RIGHT_PING_PIN, WIDTH_MAX);
 NewPing leftSonar(LEFT_PING_PIN, LEFT_PING_PIN, WIDTH_MAX);
 NewPing topSonar(TOP_PING_PIN, TOP_PING_PIN, TOP_MAX);
 NewPing backSonar(BACK_PING_PIN, BACK_PING_PIN, LENGTH_MAX);
+
+
 void setup() {
   Serial.begin(115200);
+  pinMode(LED_PIN, OUTPUT);
 }
 
 void loop() {
+
   Indication();
 
   if(Serial.available()) {
@@ -143,13 +151,34 @@ void Indication() {
   int top = SearchAvg(topIndications, countIndications);
   int back = SearchAvg(backIndications, countIndications);
 
-  widthBox = WIDTH_MAX - (right + left);
-  heightBox = TOP_MAX - top;
-  lengthBox = LENGTH_MAX - back;
+  if (right > 0 && left > 0 && top > 0 && back > 0) {
 
-  passWidthBox = PassedIndication(lastWidthBox, widthBox, queueIndicationsWidth);
-  passHeightBox = PassedIndication(lastHeightBox, heightBox, queueIndicationsHeight);
-  passLengthBox = PassedIndication(lastLengthBox, lengthBox, queueIndicationsLength);
+    widthBox = WIDTH_MAX - (right + left);
+    heightBox = TOP_MAX - top;
+    lengthBox = LENGTH_MAX - back;
+
+    passWidthBox = PassedIndication(lastWidthBox, widthBox, queueIndicationsWidth);
+    passHeightBox = PassedIndication(lastHeightBox, heightBox, queueIndicationsHeight);
+    passLengthBox = PassedIndication(lastLengthBox, lengthBox, queueIndicationsLength);
+
+    if (passWidthBox && passHeightBox && passLengthBox) {
+      digitalWrite(LED_PIN, HIGH);
+    } else {
+      digitalWrite(LED_PIN, LOW);
+    }
+  } else {
+    passWidthBox = false;
+    passHeightBox = false;
+    passLengthBox = false;
+
+    lastWidthBox = 0;
+    lastHeightBox = 0;
+    lastLengthBox = 0;
+
+    widthBox = 0;
+    heightBox = 0;
+    lengthBox = 0;
+  }
 
   if (debug) {
     Serial.print("Right_ping: ");
@@ -203,7 +232,7 @@ boolean PassedIndication (int &lastIndication, int &indication, int &queueIndica
     Serial.println(indication);
   }
 
-  //if (indication <= 0) {
+  if (indication > 0) {
     if((lastIndication - 1) <= indication && indication <= (lastIndication + 1)) {
       if(queueIndications >= 5) {
         return true;
@@ -214,11 +243,10 @@ boolean PassedIndication (int &lastIndication, int &indication, int &queueIndica
     } else {
       queueIndications = 0;
       lastIndication = indication;
-
       return false;
     }
-  //} else {
-  //  queueIndications = 0;
-  //  return false;
-  //}
+  } else {
+    queueIndications = 0;
+    return false;
+  }
 }
