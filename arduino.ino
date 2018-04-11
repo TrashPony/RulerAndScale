@@ -103,6 +103,14 @@ void loop() {
       Serial.write(lengthBox);
       Serial.write(0x7B);
     }
+
+    if(incomingByte == 0x66) {
+      digitalWrite(LED_PIN, HIGH);
+    }
+
+    if(incomingByte == 0x55) {
+      digitalWrite(LED_PIN, LOW);
+    }
   }
 }
 
@@ -161,11 +169,6 @@ void Indication() {
     passHeightBox = PassedIndication(lastHeightBox, heightBox, queueIndicationsHeight);
     passLengthBox = PassedIndication(lastLengthBox, lengthBox, queueIndicationsLength);
 
-    if (passWidthBox && passHeightBox && passLengthBox) {
-      digitalWrite(LED_PIN, HIGH);
-    } else {
-      digitalWrite(LED_PIN, LOW);
-    }
   } else {
     passWidthBox = false;
     passHeightBox = false;

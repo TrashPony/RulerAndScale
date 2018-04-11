@@ -38,7 +38,7 @@ func Controller() {
 
 				weightBox := ParseData.ParseScaleData(scaleResponse)
 				widthBox, heightBox, lengthBox := ParseData.ParseRulerData(rulerResponse)
-				
+
 				checkData, led := ParseData.CheckData(int(weightBox), widthBox, heightBox, lengthBox)
 
 				if checkData {
