@@ -2,6 +2,7 @@ package TransportData
 
 import (
 	"github.com/tarm/serial"
+	"time"
 )
 
 type Port struct {
@@ -45,6 +46,8 @@ func (p *Port) SendBytes(command []byte, countRead int) (data []byte)  {
 			p.Connection = p.Connect()
 			continue
 		}
+
+		time.Sleep(time.Millisecond * 75) // без этой задержки байты не будут успевать приниматься
 
 		data = make([]byte, countRead)
 

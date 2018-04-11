@@ -12,7 +12,7 @@ func main() {
 	Controller()
 }
 
-func Controller()  {
+func Controller() {
 
 	for {
 
@@ -38,15 +38,22 @@ func Controller()  {
 
 				weightBox := ParseData.ParseScaleData(scaleResponse)
 				widthBox, heightBox, lengthBox := ParseData.ParseRulerData(rulerResponse)
+				
+				checkData, led := ParseData.CheckData(int(weightBox), widthBox, heightBox, lengthBox)
 
-				check := ParseData.CheckData(int(weightBox), widthBox, heightBox, lengthBox)
-
-				if check {
+				if checkData {
 					println("Вес коробки: " + strconv.Itoa(int(weightBox)))
 					println("Ширина коробки: " + strconv.Itoa(widthBox))
 					println("Высота коробки: " + strconv.Itoa(heightBox))
 					println("Длинна коробки: " + strconv.Itoa(lengthBox))
 					println("-------------------")
+					rulerPort.Connection.Write([]byte{0x66})
+				}
+
+				if led {
+					rulerPort.Connection.Write([]byte{0x66})
+				} else {
+					rulerPort.Connection.Write([]byte{0x55})
 				}
 			}
 		}
