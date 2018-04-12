@@ -47,13 +47,12 @@ func Controller() {
 					println("Высота коробки: " + strconv.Itoa(heightBox))
 					println("Длинна коробки: " + strconv.Itoa(lengthBox))
 					println("-------------------")
-					rulerPort.Connection.Write([]byte{0x66})
 				}
 
 				if led {
-					rulerPort.Connection.Write([]byte{0x66})
+					rulerPort.Connection.Write([]byte{0x66}) // байт готовности, включает диод
 				} else {
-					rulerPort.Connection.Write([]byte{0x55})
+					rulerPort.Connection.Write([]byte{0x55}) // байт готовности, выключает диод
 				}
 			}
 		}
