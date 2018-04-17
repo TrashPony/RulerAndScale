@@ -20,3 +20,4 @@ Go:
 
 Для работы клипборда необходимо установить пакет xsel или xclip. (Debian 9 xclip)
 для работы эмуляции клавиатуры надо ввести команду chmod +0666 /dev/uinput 
+При ошибке "exec: "gcc": executable file not found in $PATH" необходимо установить пакет gcc
