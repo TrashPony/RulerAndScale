@@ -42,7 +42,7 @@ func Controller() {
 				widthBox, heightBox, lengthBox := ParseData.ParseRulerData(rulerResponse)
 
 				checkData, led := ParseData.CheckData(int(weightBox), widthBox, heightBox, lengthBox)
-
+				//6*1523530450259
 
 				if led {
 					rulerPort.Connection.Write([]byte{0x66}) // байт готовности, включает диод
@@ -57,11 +57,9 @@ func Controller() {
 										":" + strconv.Itoa(heightBox) +
 										":" + strconv.Itoa(lengthBox))
 
-					time.Sleep(time.Second * 1)
-
 					InputData.ToClipBoard("_ESC_Save")
 					
-					time.Sleep(time.Second * 2)
+					time.Sleep(time.Second * 3)
 				}
 			}
 		}
