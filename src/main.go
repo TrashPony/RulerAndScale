@@ -57,7 +57,11 @@ func Controller() {
 										":" + strconv.Itoa(heightBox) +
 										":" + strconv.Itoa(lengthBox))
 
-					time.Sleep(time.Second * 3)
+					time.Sleep(time.Second * 1)
+
+					InputData.ToClipBoard("_ESC_Save")
+					
+					time.Sleep(time.Second * 2)
 				}
 			}
 		}
