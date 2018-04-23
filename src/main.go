@@ -5,7 +5,6 @@ import (
 	"./ParseData"
 	"./InputData"
 	"strconv"
-	"time"
 )
 
 var scalePort, rulerPort *TransportData.Port
@@ -41,9 +40,13 @@ func Controller() {
 				weightBox := ParseData.ParseScaleData(scaleResponse)
 				widthBox, heightBox, lengthBox := ParseData.ParseRulerData(rulerResponse)
 
-				checkData, led := ParseData.CheckData(int(weightBox), widthBox, heightBox, lengthBox)
+				correctWeight := int(weightBox * 100) * 10 // TODO исправить протокол для 60 кг весов
+				
+				checkData, led := ParseData.CheckData(correctWeight, widthBox, heightBox, lengthBox)
 				//6*1523530450259
+/*
 
+ */
 				if led {
 					rulerPort.Connection.Write([]byte{0x66}) // байт готовности, включает диод
 				} else {
@@ -52,14 +55,14 @@ func Controller() {
 
 				if checkData {
 
-					InputData.ToClipBoard(":" + strconv.Itoa(int(weightBox)) +
+					InputData.ToClipBoard(":" + strconv.Itoa(correctWeight) +
 										":" + strconv.Itoa(widthBox) +
 										":" + strconv.Itoa(heightBox) +
 										":" + strconv.Itoa(lengthBox))
 
 					InputData.ToClipBoard("_ESC_Save")
 					
-					time.Sleep(time.Second * 3)
+					//time.Sleep(time.Second * 3)
 				}
 			}
 		}

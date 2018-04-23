@@ -9,9 +9,9 @@
 // Пищалка
 #define LED_PIN  9
 
-#define TOP_MAX          74
+#define TOP_MAX          87
 #define WIDTH_MAX        103
-#define LENGTH_MAX       63
+#define LENGTH_MAX       61
 
 boolean passWidthBox = false;
 boolean passHeightBox = false;
