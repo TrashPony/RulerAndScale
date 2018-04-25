@@ -4,7 +4,9 @@ import (
 	"./TransportData"
 	"./ParseData"
 	"./InputData"
+	"./Log"
 	"strconv"
+	"time"
 )
 
 var scalePort, rulerPort *TransportData.Port
@@ -14,7 +16,6 @@ func main() {
 }
 
 func Controller() {
-
 	for {
 
 		if scalePort == nil || rulerPort == nil {
@@ -43,7 +44,6 @@ func Controller() {
 				correctWeight := int(weightBox * 100) * 10 // TODO исправить протокол для 60 кг весов
 				
 				checkData, led := ParseData.CheckData(correctWeight, widthBox, heightBox, lengthBox)
-				//6*1523530450259
 /*
 
  */
@@ -62,7 +62,9 @@ func Controller() {
 
 					InputData.ToClipBoard("_ESC_Save")
 					
-					//time.Sleep(time.Second * 3)
+					Log.Write(correctWeight, widthBox, heightBox, lengthBox)
+
+					time.Sleep(time.Second * 3)
 				}
 			}
 		}
