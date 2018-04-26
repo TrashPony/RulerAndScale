@@ -41,7 +41,7 @@ func Controller() {
 				weightBox := ParseData.ParseScaleData(scaleResponse)
 				widthBox, heightBox, lengthBox := ParseData.ParseRulerData(rulerResponse)
 
-				correctWeight := int(weightBox * 100) * 10 // TODO исправить протокол для 60 кг весов
+				correctWeight := int(weightBox)
 				
 				checkData, led := ParseData.CheckData(correctWeight, widthBox, heightBox, lengthBox)
 /*
@@ -61,7 +61,7 @@ func Controller() {
 										":" + strconv.Itoa(lengthBox))
 
 					InputData.ToClipBoard("_ESC_Save")
-					
+
 					Log.Write(correctWeight, widthBox, heightBox, lengthBox)
 
 					time.Sleep(time.Second * 3)

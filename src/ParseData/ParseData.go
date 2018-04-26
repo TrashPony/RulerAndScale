@@ -21,25 +21,49 @@ func ParseScaleData(data *TransportData.ScaleResponse) (weightBox float64) {
 
 		if data.ReadyAndDiscreteness[1] == 0 {
 			if  data.Weight[1] == 0 { // вес уместился в 1н байт
-				weightBox = float64(data.Weight[0]) * 1
-				return
+
+				weightBox = float64(data.Weight[0])
+
+				if weightBox <= 256 {
+					return
+				} else {
+					return 0
+				}
 			}
 
 			if data.Weight[1] != 0 { // не уместился
-				weightBox = ((256 * float64(data.Weight[1])) + float64(data.Weight[0])) * 1
-				return
+
+				weightBox = (256 * float64(data.Weight[1])) + float64(data.Weight[0])
+
+				if weightBox < 15000 {
+					return
+				} else {
+					return 0
+				}
 			}
 		}
 
 		if data.ReadyAndDiscreteness[1] == 4 {
 			if  data.Weight[1] == 0 { // вес уместился в 1н байт
-				weightBox = float64(data.Weight[0]) * 0.01
-				return
+
+				weightBox = float64(data.Weight[0]) * 10
+
+				if weightBox <= 2560 {
+					return
+				} else {
+					return 0
+				}
 			}
 
 			if data.Weight[1] != 0 { // не уместился
-				weightBox = ((256 * float64(data.Weight[1])) + float64(data.Weight[0])) * 0.01
-				return
+
+				weightBox = ((256 * float64(data.Weight[1])) + float64(data.Weight[0])) * 10
+
+				if weightBox < 60000 {
+					return
+				} else {
+					return 0
+				}
 			}
 		}
 	}
