@@ -19,7 +19,8 @@ func CheckData(weightBox, widthBox, heightBox, lengthBox int) (checkScaleData bo
 			return true, true, true
 		}
 	} else {
-		if weightBox > 0 && heightBox > 0 {
+
+		if weightBox > 0 && heightBox > 0 && lengthBox > 0 {
 			if (OldWeightValue - faultWeight) <= weightBox && weightBox <= (OldWeightValue + faultWeight) {
 				return false, false, true
 			} else {

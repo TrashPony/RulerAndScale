@@ -170,17 +170,30 @@ void Indication() {
     passLengthBox = PassedIndication(lastLengthBox, lengthBox, queueIndicationsLength);
 
   } else {
-    passWidthBox = false;
-    passHeightBox = false;
-    passLengthBox = false;
-
-    lastWidthBox = 0;
-    lastHeightBox = 0;
-    lastLengthBox = 0;
-
-    widthBox = 0;
-    heightBox = 0;
-    lengthBox = 0;
+    if (top > 0 && back > 0) {
+      
+      passHeightBox = PassedIndication(lastHeightBox, heightBox, queueIndicationsHeight);
+      passLengthBox = PassedIndication(lastLengthBox, lengthBox, queueIndicationsLength);
+      
+      passWidthBox = false;
+      lastWidthBox = 0;
+      widthBox = 0;
+      
+    } else {
+      
+      passWidthBox = false;
+      passHeightBox = false;
+      passLengthBox = false;
+  
+      lastWidthBox = 0;
+      lastHeightBox = 0;
+      lastLengthBox = 0;
+  
+      widthBox = 0;
+      heightBox = 0;
+      lengthBox = 0;
+      
+    }
   }
 
   if (debug) {
