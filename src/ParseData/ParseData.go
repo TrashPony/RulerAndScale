@@ -94,16 +94,15 @@ func ParseRulerData(data *TransportData.RulerResponse) (widthBox, heightBox, len
 
 	*/
 
+	widthBox = rulerParse(data.Width, 0x0B)   //ширина
+	heightBox = rulerParse(data.Height, 0x16) //высота
+	lengthBox = rulerParse(data.Length, 0x21) //длина
+
 	if data.Width[1] != 122 {
-
-		widthBox = rulerParse(data.Width, 0x0B)   //ширина
-		heightBox = rulerParse(data.Height, 0x16) //высота
-		lengthBox = rulerParse(data.Length, 0x21) //длина
-
 		return
 	} else {
-		// если только вес то нам не нужны измрения
-		return 0,0,0, true
+		onlyWeight = true
+		return
 	}
 }
 

@@ -1,5 +1,8 @@
 #include <NewPing.h>
 
+// Кнопки
+#define BUTTON 8
+
 // Дальномер
 #define LEFT_PING_PIN  13
 #define TOP_PING_PIN   12
@@ -8,7 +11,7 @@
 
 // Диоды
 #define RED_LED_PIN  9
-#define GREEN_LED_PIN  8
+#define GREEN_LED_PIN  5
 
 #define TOP_MAX          87
 #define WIDTH_MAX        103
@@ -44,17 +47,31 @@ void setup() {
   Serial.begin(115200);
   pinMode(RED_LED_PIN, OUTPUT);
   pinMode(GREEN_LED_PIN, OUTPUT);
+  pinMode(BUTTON, INPUT);
 }
 
 void loop() {
 
+  if (digitalRead(BUTTON) == LOW) {
+    if (onlyWeight) {
+      onlyWeight = false;
+      digitalWrite(RED_LED_PIN, HIGH);
+      digitalWrite(GREEN_LED_PIN, LOW);
+    } else {
+      onlyWeight = true;
+      digitalWrite(RED_LED_PIN, LOW);
+      digitalWrite(GREEN_LED_PIN, HIGH);
+    }
+    delay(500);
+  }
+
   Indication();
 
-  if(Serial.available()) {
+  if (Serial.available()) {
 
     byte incomingByte = Serial.read();
 
-    if(incomingByte == 0x95) {
+    if (incomingByte == 0x95) {
       Serial.write(0x7F);
       Serial.write(0x7F);
       Serial.write(0x7F);
@@ -64,16 +81,16 @@ void loop() {
     }
 
     // запрос ширины
-    if(incomingByte == 0x88) {
+    if (incomingByte == 0x88) {
       Serial.write(0x2D);
 
-      if(onlyWeight) {
+      if (onlyWeight) {
         Serial.write(0x7A);
-      } 
+      }
       else {
-        if(passWidthBox) {
+        if (passWidthBox) {
           Serial.write(0x7F);
-        } 
+        }
         else {
           Serial.write(0x7E);
         }
@@ -85,16 +102,16 @@ void loop() {
     }
 
     // запрос высоты
-    if(incomingByte == 0x99) {
+    if (incomingByte == 0x99) {
       Serial.write(0x2D);
 
-      if(onlyWeight) {
+      if (onlyWeight) {
         Serial.write(0x7A);
-      } 
+      }
       else {
-        if(passHeightBox) {
+        if (passHeightBox) {
           Serial.write(0x7F);
-        } 
+        }
         else {
           Serial.write(0x7E);
         }
@@ -106,16 +123,16 @@ void loop() {
     }
 
     // запрос длины
-    if(incomingByte == 0x77) {
+    if (incomingByte == 0x77) {
       Serial.write(0x2D);
 
-      if(onlyWeight) {
+      if (onlyWeight) {
         Serial.write(0x7A);
-      } 
+      }
       else {
-        if(passLengthBox) {
+        if (passLengthBox) {
           Serial.write(0x7F);
-        } 
+        }
         else {
           Serial.write(0x7E);
         }
@@ -126,18 +143,18 @@ void loop() {
       Serial.write(0x7B);
     }
 
-    if(incomingByte == 0x66) {
-      if(onlyWeight) {
+    if (incomingByte == 0x66) {
+      if (onlyWeight) {
         digitalWrite(GREEN_LED_PIN, HIGH);
         digitalWrite(RED_LED_PIN, LOW);
-      } 
+      }
       else {
         digitalWrite(RED_LED_PIN, HIGH);
         digitalWrite(GREEN_LED_PIN, LOW);
       }
     }
 
-    if(incomingByte == 0x55) {
+    if (incomingByte == 0x55) {
       digitalWrite(RED_LED_PIN, LOW);
       digitalWrite(GREEN_LED_PIN, LOW);
     }
@@ -175,7 +192,7 @@ void Indication() {
   int backIndications[countIndications];
 
 
-  for (int i = 0; i < countIndications; i++){
+  for (int i = 0; i < countIndications; i++) {
 
     rightIndications[i] = rightSonar.ping_cm();
     leftIndications[i] = leftSonar.ping_cm();
@@ -199,7 +216,7 @@ void Indication() {
     passHeightBox = PassedIndication(lastHeightBox, heightBox, queueIndicationsHeight);
     passLengthBox = PassedIndication(lastLengthBox, lengthBox, queueIndicationsLength);
 
-  } 
+  }
   else {
     passWidthBox = false;
     passHeightBox = false;
@@ -267,21 +284,21 @@ boolean PassedIndication (int &lastIndication, int &indication, int &queueIndica
   }
 
   if (indication > 0) {
-    if((lastIndication - 1) <= indication && indication <= (lastIndication + 1)) {
-      if(queueIndications >= 5) {
+    if ((lastIndication - 1) <= indication && indication <= (lastIndication + 1)) {
+      if (queueIndications >= 5) {
         return true;
-      } 
+      }
       else {
         queueIndications++;
         return false;
       }
-    } 
+    }
     else {
       queueIndications = 0;
       lastIndication = indication;
       return false;
     }
-  } 
+  }
   else {
     queueIndications = 0;
     return false;
