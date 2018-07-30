@@ -6,12 +6,15 @@
 #define BACK_PING_PIN  11
 #define RIGHT_PING_PIN 10
 
-// Пищалка
-#define LED_PIN  9
+// Диоды
+#define RED_LED_PIN  9
+#define GREEN_LED_PIN  8
 
 #define TOP_MAX          87
 #define WIDTH_MAX        103
 #define LENGTH_MAX       61
+
+boolean onlyWeight = false;
 
 boolean passWidthBox = false;
 boolean passHeightBox = false;
@@ -39,7 +42,8 @@ NewPing backSonar(BACK_PING_PIN, BACK_PING_PIN, LENGTH_MAX);
 
 void setup() {
   Serial.begin(115200);
-  pinMode(LED_PIN, OUTPUT);
+  pinMode(RED_LED_PIN, OUTPUT);
+  pinMode(GREEN_LED_PIN, OUTPUT);
 }
 
 void loop() {
@@ -63,10 +67,16 @@ void loop() {
     if(incomingByte == 0x88) {
       Serial.write(0x2D);
 
-      if(passWidthBox) {
-        Serial.write(0x7F);
-      } else {
-        Serial.write(0x7E);
+      if(onlyWeight) {
+        Serial.write(0x7A);
+      } 
+      else {
+        if(passWidthBox) {
+          Serial.write(0x7F);
+        } 
+        else {
+          Serial.write(0x7E);
+        }
       }
 
       Serial.write(0x0B);
@@ -78,10 +88,16 @@ void loop() {
     if(incomingByte == 0x99) {
       Serial.write(0x2D);
 
-      if(passHeightBox) {
-        Serial.write(0x7F);
-      } else {
-        Serial.write(0x7E);
+      if(onlyWeight) {
+        Serial.write(0x7A);
+      } 
+      else {
+        if(passHeightBox) {
+          Serial.write(0x7F);
+        } 
+        else {
+          Serial.write(0x7E);
+        }
       }
 
       Serial.write(0x16);
@@ -93,10 +109,16 @@ void loop() {
     if(incomingByte == 0x77) {
       Serial.write(0x2D);
 
-      if(passLengthBox) {
-        Serial.write(0x7F);
-      } else {
-        Serial.write(0x7E);
+      if(onlyWeight) {
+        Serial.write(0x7A);
+      } 
+      else {
+        if(passLengthBox) {
+          Serial.write(0x7F);
+        } 
+        else {
+          Serial.write(0x7E);
+        }
       }
 
       Serial.write(0x21);
@@ -105,11 +127,19 @@ void loop() {
     }
 
     if(incomingByte == 0x66) {
-      digitalWrite(LED_PIN, HIGH);
+      if(onlyWeight) {
+        digitalWrite(GREEN_LED_PIN, HIGH);
+        digitalWrite(RED_LED_PIN, LOW);
+      } 
+      else {
+        digitalWrite(RED_LED_PIN, HIGH);
+        digitalWrite(GREEN_LED_PIN, LOW);
+      }
     }
 
     if(incomingByte == 0x55) {
-      digitalWrite(LED_PIN, LOW);
+      digitalWrite(RED_LED_PIN, LOW);
+      digitalWrite(GREEN_LED_PIN, LOW);
     }
   }
 }
@@ -117,7 +147,7 @@ void loop() {
 int SearchAvg (int indications[], int countIndications) {
 
   int result = 0;
-  int maxcount = 0;
+  int maxCount = 0;
 
   for (int i = 0; i < countIndications; i++) {
     int count = 0;
@@ -126,8 +156,8 @@ int SearchAvg (int indications[], int countIndications) {
         count++;
       }
 
-      if (maxcount < count) {
-        maxcount = count;
+      if (maxCount < count) {
+        maxCount = count;
         result = i;
       }
     }
@@ -147,10 +177,10 @@ void Indication() {
 
   for (int i = 0; i < countIndications; i++){
 
-      rightIndications[i] = rightSonar.ping_cm();
-      leftIndications[i] = leftSonar.ping_cm();
-      topIndications[i] = topSonar.ping_cm();
-      backIndications[i] = backSonar.ping_cm();
+    rightIndications[i] = rightSonar.ping_cm();
+    leftIndications[i] = leftSonar.ping_cm();
+    topIndications[i] = topSonar.ping_cm();
+    backIndications[i] = backSonar.ping_cm();
 
   }
 
@@ -169,18 +199,19 @@ void Indication() {
     passHeightBox = PassedIndication(lastHeightBox, heightBox, queueIndicationsHeight);
     passLengthBox = PassedIndication(lastLengthBox, lengthBox, queueIndicationsLength);
 
-  } else {
-      passWidthBox = false;
-      passHeightBox = false;
-      passLengthBox = false;
-  
-      lastWidthBox = 0;
-      lastHeightBox = 0;
-      lastLengthBox = 0;
-  
-      widthBox = 0;
-      heightBox = 0;
-      lengthBox = 0;
+  } 
+  else {
+    passWidthBox = false;
+    passHeightBox = false;
+    passLengthBox = false;
+
+    lastWidthBox = 0;
+    lastHeightBox = 0;
+    lastLengthBox = 0;
+
+    widthBox = 0;
+    heightBox = 0;
+    lengthBox = 0;
   }
 
   if (debug) {
@@ -239,16 +270,19 @@ boolean PassedIndication (int &lastIndication, int &indication, int &queueIndica
     if((lastIndication - 1) <= indication && indication <= (lastIndication + 1)) {
       if(queueIndications >= 5) {
         return true;
-      } else {
+      } 
+      else {
         queueIndications++;
         return false;
       }
-    } else {
+    } 
+    else {
       queueIndications = 0;
       lastIndication = indication;
       return false;
     }
-  } else {
+  } 
+  else {
     queueIndications = 0;
     return false;
   }

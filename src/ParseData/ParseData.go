@@ -71,9 +71,10 @@ func ParseScaleData(data *TransportData.ScaleResponse) (weightBox float64) {
 	return
 }
 
-func ParseRulerData(data *TransportData.RulerResponse) (widthBox, heightBox, lengthBox int) {
+func ParseRulerData(data *TransportData.RulerResponse) (widthBox, heightBox, lengthBox int, onlyWeight bool) {
 
 	/*
+
 	команда 0x95, ответ 0x7F - успешное подключение к устройству
 
 	команда 0x99 - запрос высоты
@@ -81,7 +82,7 @@ func ParseRulerData(data *TransportData.RulerResponse) (widthBox, heightBox, len
 	команда 0x77 - запрос длины
 
 	протокол измерения "0x2D 0x7F/0x7E 0x0B 0x64 0x7B"
-	команда 99, ответ "0x2D - начало строки, 0x7F/0x7E - флаг готовности,  0xB - датчик, 0x64 - растояние, 0x7B - конец строки" все в 16ричной системе счисления
+	команда 99, ответ "0x2D - начало строки, 0x7F/0x7E/0x7A - флаг готовности,  0xB - датчик, 0x64 - растояние, 0x7B - конец строки" все в 16ричной системе счисления
 
 	0x0B - ширина
 	0x16 - высота
@@ -89,13 +90,21 @@ func ParseRulerData(data *TransportData.RulerResponse) (widthBox, heightBox, len
 
 	0x7F - готов
 	0x7E - неготов
+	0x7A - только вес
+
 	*/
 
-	widthBox = rulerParse(data.Width, 0x0B)   //ширина
-	heightBox = rulerParse(data.Height, 0x16) //высота
-	lengthBox = rulerParse(data.Length, 0x21) //длина
+	if data.Width[1] != 122 {
 
-	return
+		widthBox = rulerParse(data.Width, 0x0B)   //ширина
+		heightBox = rulerParse(data.Height, 0x16) //высота
+		lengthBox = rulerParse(data.Length, 0x21) //длина
+
+		return
+	} else {
+		// если только вес то нам не нужны измрения
+		return 0,0,0, true
+	}
 }
 
 func rulerParse(data []byte, id byte) (result int) {

@@ -39,32 +39,12 @@ func Controller() {
 			if scalePort != nil && rulerPort != nil {
 
 				weightBox := ParseData.ParseScaleData(scaleResponse)
-				widthBox, heightBox, lengthBox := ParseData.ParseRulerData(rulerResponse)
+				widthBox, heightBox, lengthBox, onlyWeight := ParseData.ParseRulerData(rulerResponse)
 
 				correctWeight := int(weightBox)
 
-				checkScaleData, led := ParseData.CheckData(correctWeight, widthBox, heightBox, lengthBox)
-/*
-:240:34:30:20
-_ESC_Save
-:240:34:30:20
-_ESC_Save
+				checkScaleData, led := ParseData.CheckData(correctWeight, widthBox, heightBox, lengthBox, onlyWeight)
 
-:220:34:30:20
-_ESC_Save
-:250:33:30:20
-_ESC_Save
-:250:22:30:30
-_ESC_Save
-:220:33:30:20
-_ESC_Save
-:250:23:29:30
-_ESC_Save
-:270:33:30:20
-_ESC_Save
-
-
-*/
 				if led {
 					rulerPort.Connection.Write([]byte{0x66}) // байт готовности, включает диод
 				} else {
@@ -73,10 +53,16 @@ _ESC_Save
 
 				if checkScaleData {
 
-					InputData.ToClipBoard(":" + strconv.Itoa(correctWeight) +
-										":" + strconv.Itoa(widthBox) +
-										":" + strconv.Itoa(heightBox) +
-										":" + strconv.Itoa(lengthBox))
+					if onlyWeight {
+
+						InputData.ToClipBoard(strconv.Itoa(correctWeight))
+
+					} else {
+						InputData.ToClipBoard(":" + strconv.Itoa(correctWeight) +
+							":" + strconv.Itoa(widthBox) +
+							":" + strconv.Itoa(heightBox) +
+							":" + strconv.Itoa(lengthBox))
+					}
 
 					InputData.ToClipBoard("_ESC_Save")
 
