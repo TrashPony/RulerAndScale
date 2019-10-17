@@ -3,12 +3,12 @@ package InputData
 import (
 	"github.com/atotto/clipboard"
 	"github.com/micmonay/keybd_event"
-	"time"
 	"log"
 	"runtime"
+	"time"
 )
 
-func ToClipBoard(data string)  {
+func ToClipBoard(data string) {
 
 	println(data)
 
@@ -23,7 +23,7 @@ func ToClipBoard(data string)  {
 	time.Sleep(time.Millisecond * 400)
 }
 
-func pressCtrlV()  {
+func pressCtrlV() {
 	kb, err := keybd_event.NewKeyBonding()
 	if err != nil {
 		panic(err)
@@ -45,7 +45,7 @@ func pressCtrlV()  {
 	}
 }
 
-func pressEnter()  {
+func pressEnter() {
 	kb, err := keybd_event.NewKeyBonding()
 	if err != nil {
 		panic(err)

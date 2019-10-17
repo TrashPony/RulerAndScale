@@ -11,7 +11,7 @@ type RulerResponse struct {
 	Length []byte
 }
 
-func SendScaleCommand(port *Port) (*ScaleResponse) {
+func SendScaleCommand(port *Port) *ScaleResponse {
 
 	var response ScaleResponse
 	countRead := 2
@@ -29,23 +29,18 @@ func SendScaleCommand(port *Port) (*ScaleResponse) {
 	}
 }
 
-func SendRulerCommand(port *Port) (*RulerResponse) {
+func SendRulerCommand(port *Port) []byte {
 
-	var response RulerResponse
-	countRead := 5
+	countRead := 12
 
-	// запрос ширины коробки
-	response.Width = port.SendBytes([]byte{0x88}, countRead)
+	// запрос гадаритов коробки
+	data := port.SendBytes([]byte{0x88}, countRead)
 
 	// запрос высоты коробки
-	response.Height = port.SendBytes([]byte{0x99}, countRead)
+	//response.Height = port.SendBytes([]byte{0x99}, countRead)
 
 	// запрос длинны коробки
-	response.Length = port.SendBytes([]byte{0x77}, countRead)
+	//response.Length = port.SendBytes([]byte{0x77}, countRead)
 
-	if response.Width != nil && response.Height != nil && response.Length != nil {
-		return &response
-	} else {
-		return nil
-	}
+	return data
 }

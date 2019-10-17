@@ -1,21 +1,30 @@
-#include <NewPing.h>
+// библиотека для работы с I²C хабом
+#include <TroykaI2CHub.h>
+// библиотека для управления лазером
+#include "Adafruit_VL53L0X.h"
+
+// объект для работы с хабом адрес по умолчанию 0x70
+TroykaI2CHub splitter;
+
+// адрес устройства лазера один для всех подсетей
+#define LOX2_ADDRESS 0x29
 
 // Кнопки
 #define BUTTON 8
 
 // Дальномер
-#define LEFT_PING_PIN  13
-#define TOP_PING_PIN   12
-#define BACK_PING_PIN  11
-#define RIGHT_PING_PIN 10
+#define LEFT_PING_LAN  0
+#define RIGHT_PING_LAN 1
+#define TOP_PING_LAN   2
+#define BACK_PING_LAN  3
 
 // Диоды
 #define RED_LED_PIN  9
 #define GREEN_LED_PIN  5
 
-#define TOP_MAX          87
-#define WIDTH_MAX        103
-#define LENGTH_MAX       61
+#define TOP_MAX          77
+#define WIDTH_MAX        87
+#define LENGTH_MAX       46
 
 boolean onlyWeight = false;
 
@@ -35,23 +44,32 @@ int queueIndicationsWidth = 0;
 int queueIndicationsHeight = 0;
 int queueIndicationsLength = 0;
 
-boolean debug = false;
+boolean debug = true;
 
-NewPing rightSonar(RIGHT_PING_PIN, RIGHT_PING_PIN, WIDTH_MAX);
-NewPing leftSonar(LEFT_PING_PIN, LEFT_PING_PIN, WIDTH_MAX);
-NewPing topSonar(TOP_PING_PIN, TOP_PING_PIN, TOP_MAX);
-NewPing backSonar(BACK_PING_PIN, BACK_PING_PIN, LENGTH_MAX);
+Adafruit_VL53L0X lox = Adafruit_VL53L0X();
 
+void setup()
+{
+  // подключаем лазер
+  lox.begin();
 
-void setup() {
-  Serial.begin(115200);
   pinMode(RED_LED_PIN, OUTPUT);
   pinMode(GREEN_LED_PIN, OUTPUT);
   pinMode(BUTTON, INPUT);
+
+  Serial.begin(115200);
+  // ждем пока откроется сериал порт
+  while(!Serial) {}
+
+  // начало работы с I²C хабом
+  splitter.begin();
+
+  // ждём одну секунду
+  delay(1000);
 }
 
-void loop() {
-
+void loop()
+{
   if (digitalRead(BUTTON) == LOW) {
     if (onlyWeight) {
       onlyWeight = false;
@@ -161,50 +179,39 @@ void loop() {
   }
 }
 
-int SearchAvg (int indications[], int countIndications) {
+int getDistance(int pin) {
 
-  int result = 0;
-  int maxCount = 0;
+  // pin - указываем номер сети для лазера откуда брать данные
+  splitter.setBusChannel(pin);
+  
+  return getIndication();
+}
 
-  for (int i = 0; i < countIndications; i++) {
-    int count = 0;
-    for (int j = 0; j < countIndications; j++) {
-      if (indications[i] == indications[j]) {
-        count++;
-      }
+int getIndication() {
+  
+  VL53L0X_RangingMeasurementData_t measure;
+  lox.rangingTest(&measure, false);
 
-      if (maxCount < count) {
-        maxCount = count;
-        result = i;
-      }
-    }
-  }
+  // проверка на доступность устройства 
+  Wire.beginTransmission(LOX2_ADDRESS);
+  byte state = Wire.endTransmission();
 
-  return indications[result];
+  float dist = round((measure.RangeMilliMeter)/10);
+  int distInt = int(dist);
+  
+  if (measure.RangeStatus != 4 && state == 0) {
+    return distInt;
+  } else {
+    return -1;
+  }   
 }
 
 void Indication() {
-  int countIndications = 5;
 
-  int rightIndications[countIndications];
-  int leftIndications[countIndications];
-  int topIndications[countIndications];
-  int backIndications[countIndications];
-
-
-  for (int i = 0; i < countIndications; i++) {
-
-    rightIndications[i] = rightSonar.ping_cm();
-    leftIndications[i] = leftSonar.ping_cm();
-    topIndications[i] = topSonar.ping_cm();
-    backIndications[i] = backSonar.ping_cm();
-
-  }
-
-  int right = SearchAvg(rightIndications, countIndications);
-  int left = SearchAvg(leftIndications, countIndications);
-  int top = SearchAvg(topIndications, countIndications);
-  int back = SearchAvg(backIndications, countIndications);
+  int right = getDistance(RIGHT_PING_LAN);
+  int left = getDistance(LEFT_PING_LAN);
+  int top =  getDistance(TOP_PING_LAN);
+  int back = getDistance(BACK_PING_LAN);
 
   if (right > 0 && left > 0 && top > 0 && back > 0) {
 
@@ -216,8 +223,7 @@ void Indication() {
     passHeightBox = PassedIndication(lastHeightBox, heightBox, queueIndicationsHeight);
     passLengthBox = PassedIndication(lastLengthBox, lengthBox, queueIndicationsLength);
 
-  }
-  else {
+  } else {
     passWidthBox = false;
     passHeightBox = false;
     passLengthBox = false;

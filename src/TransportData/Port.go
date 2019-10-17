@@ -1,67 +1,39 @@
 package TransportData
 
 import (
-	"github.com/tarm/serial"
-	"time"
+	"github.com/jacobsa/go-serial/serial"
+	"io"
 )
 
 type Port struct {
-	Name string
-	Config *serial.Config
-	Connection *serial.Port
+	Name       string
+	Config     *serial.OpenOptions
+	Connection io.ReadWriteCloser
 }
 
-func (p *Port) Connect () (connect *serial.Port)   {
-	connect, err := serial.OpenPort(p.Config)
+func (p *Port) SendBytes(command []byte, countRead int) (data []byte) {
+
+	//ioutil.ReadAll(p.Connection)
+
+	_, err := p.Connection.Write(command)
 	if err != nil {
-		return nil
+		println("ошибка записи" + err.Error())
+		return data
+	}
+
+	//time.Sleep(150 * time.Millisecond)
+	data = make([]byte, countRead)
+
+	n, err := p.Connection.Read(data)
+	if err != nil {
+		println("ошибка чтения: " + err.Error())
+	}
+
+	if n == countRead {
+		return data
 	} else {
-		p.Connection = connect
-		return connect
+		println("ошибка чтения: неправильное количество байт")
 	}
-}
 
-func (p *Port) SendBytes(command []byte, countRead int) (data []byte)  {
-
-	errorCount := 0
-
-	for {
-
-		if errorCount >= 5 {
-			return nil
-		}
-
-		if p.Connection == nil {
-			println("ошибка повторного подключения")
-			return nil
-		}
-
-		p.Connection.Flush()
-
-		_, err := p.Connection.Write(command)
-		if err != nil {
-			println("ошибка записи" + err.Error())
-			errorCount++
-			p.Connection.Close()
-			p.Connection = p.Connect()
-			continue
-		}
-
-		time.Sleep(time.Millisecond * 75) // без этой задержки байты не будут успевать приниматься
-
-		data = make([]byte, countRead)
-
-		n, err := p.Connection.Read(data)
-		if err != nil {
-			println("ошибка чтения: " + err.Error())
-			p.Connection.Close()
-			errorCount++
-			p.Connection = p.Connect()
-			continue
-		}
-
-		if n == countRead {
-			return data
-		}
-	}
+	return
 }
