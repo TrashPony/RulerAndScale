@@ -32,6 +32,11 @@ int widthBox;
 int heightBox;
 int lengthBox;
 
+int right;
+int left;
+int top;
+int back;
+
 boolean debug = false;
 
 Adafruit_VL53L0X lox = Adafruit_VL53L0X();
@@ -68,7 +73,7 @@ void loop()
       digitalWrite(RED_LED_PIN, LOW);
       digitalWrite(GREEN_LED_PIN, HIGH);
     }
-    //delay(500);
+    delay(500);
   }
 
   Indication();
@@ -76,21 +81,47 @@ void loop()
   if (Serial.available()) {
 
     byte incomingByte = Serial.read();
+    byte ID = Serial.read();
+
+    Serial.flush();
 
     if (incomingByte == 0x95) {
       byte buf[4] = {0x7F, 0x7F, 0x7F, 0x7F};
       Serial.write(buf, 4);
-      Serial.flush();
     }
 
     // запрос габаритов
     if (incomingByte == 0x88) {
-      byte buf[12] = {
+      byte buf[13] = {
+        ID,
         0x2D, 0x0B, widthBox, 0x7B,
         0x2D, 0x16, heightBox, 0x7B,
-        0x2D, 0x21, lengthBox, 0x7B,
-        };
-      Serial.write(buf, 12);
+        0x2D, 0x21, lengthBox, 0x7B};
+
+      Serial.write(buf, sizeof(buf));
+    }
+
+    // взятие текущих настроек линейки
+    if (incomingByte == 0x89) {
+      byte buf[13] = {
+        ID,
+        0x2D, 0x0B, WIDTH_MAX, 0x7B,
+        0x2D, 0x16, TOP_MAX, 0x7B,
+        0x2D, 0x21, LENGTH_MAX, 0x7B};
+
+      Serial.write(buf, sizeof(buf));
+    }
+
+    // запрос индикации
+    if (incomingByte == 0x80) {
+      byte buf[17] = {
+        ID,
+        0x2D, 0x0B, left, 0x7B,
+        0x2D, 0xBB, right, 0x7B,
+        0x2D, 0x16, top, 0x7B,
+        0x2D, 0x21, back, 0x7B};
+
+      Serial.write(buf, sizeof(buf));
     }
 
     if (incomingByte == 0x66) {
@@ -139,10 +170,10 @@ int getIndication() {
 
 void Indication() {
 
-  int right = getDistance(RIGHT_PING_LAN);
-  int left = getDistance(LEFT_PING_LAN);
-  int top =  getDistance(TOP_PING_LAN);
-  int back = getDistance(BACK_PING_LAN);
+  right = getDistance(RIGHT_PING_LAN);
+  left = getDistance(LEFT_PING_LAN);
+  top =  getDistance(TOP_PING_LAN);
+  back = getDistance(BACK_PING_LAN);
 
   widthBox = WIDTH_MAX - (right + left);
   heightBox = TOP_MAX - top;

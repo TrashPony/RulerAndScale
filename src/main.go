@@ -5,20 +5,37 @@ import (
 	"github.com/TrashPony/RulerAndScale/Log"
 	"github.com/TrashPony/RulerAndScale/ParseData"
 	"github.com/TrashPony/RulerAndScale/TransportData"
+	"github.com/TrashPony/RulerAndScale/websocket"
+	"github.com/gorilla/mux"
+	"log"
+	"net/http"
 	"strconv"
 	"time"
 )
 
-var scalePort, rulerPort *TransportData.Port
-
 func main() {
 	go TransportData.SelectPort()
-	Controller()
+	go Controller()
+
+	router := mux.NewRouter()
+
+	router.HandleFunc("/ws", websocket.HandleConnections)
+	router.PathPrefix("/").Handler(http.FileServer(http.Dir("../static/")))
+
+	go websocket.Sender()
+
+	log.Println("http server started on :8080")
+	err := http.ListenAndServe(":8080", router)
+	if err != nil {
+		log.Panic(err)
+	}
 }
 
 func Controller() {
 
 	for {
+
+		//time.Sleep(10 * time.Millisecond)
 
 		correctWeight := -1
 		widthBox, heightBox, lengthBox := -1, -1, -1
@@ -39,14 +56,14 @@ func Controller() {
 
 		rulerPort := TransportData.Ports.GetPort("ruler")
 		if rulerPort != nil {
-			rulerResponse := TransportData.SendRulerCommand(rulerPort)
+			rulerResponse := rulerPort.SendRulerCommand([]byte{0x88}, 13)
 			if rulerResponse == nil {
 
 				println("Линейка отвалилась")
 				TransportData.Ports.ResetPort("ruler")
 
 			} else {
-				widthBox, heightBox, lengthBox, onlyWeight = ParseData.ParseRulerData(rulerResponse)
+				widthBox, heightBox, lengthBox = ParseData.ParseRulerData(rulerResponse, []byte{0x88})
 			}
 		}
 

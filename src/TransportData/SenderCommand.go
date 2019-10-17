@@ -1,14 +1,12 @@
 package TransportData
 
+import (
+	"github.com/jacobsa/go-serial/serial"
+)
+
 type ScaleResponse struct {
 	ReadyAndDiscreteness []byte
 	Weight               []byte
-}
-
-type RulerResponse struct {
-	Width  []byte
-	Height []byte
-	Length []byte
 }
 
 func SendScaleCommand(port *Port) *ScaleResponse {
@@ -17,10 +15,10 @@ func SendScaleCommand(port *Port) *ScaleResponse {
 	countRead := 2
 
 	// не/готовность 0/128 и дискретность 0х00-1г,0х01-0.1г,0х04-0.01кг,0х05-0.1кг
-	response.ReadyAndDiscreteness = port.SendBytes([]byte{0x48}, countRead)
+	response.ReadyAndDiscreteness = port.SendBytes([]byte{0x48}, countRead, 0)
 
 	//вес в виде 2х байтов n х n
-	response.Weight = port.SendBytes([]byte{0x45}, countRead)
+	response.Weight = port.SendBytes([]byte{0x45}, countRead, 0)
 
 	if response.ReadyAndDiscreteness != nil && response.Weight != nil {
 		return &response
@@ -29,18 +27,32 @@ func SendScaleCommand(port *Port) *ScaleResponse {
 	}
 }
 
-func SendRulerCommand(port *Port) []byte {
+func (p *Port) SendRulerCommand(command []byte, countRead int) []byte {
 
-	countRead := 12
+	p.mx.Lock()
+	defer p.mx.Unlock()
 
-	// запрос гадаритов коробки
-	data := port.SendBytes([]byte{0x88}, countRead)
+	if p.commandID > 200 {
+		p.commandID = 1
+	}
+	p.commandID++
 
-	// запрос высоты коробки
-	//response.Height = port.SendBytes([]byte{0x99}, countRead)
+	p.Connection.Close()
+	p.Config.MinimumReadSize = uint(countRead)
 
-	// запрос длинны коробки
-	//response.Length = port.SendBytes([]byte{0x77}, countRead)
+	var err error
+	p.Connection, err = serial.Open(*p.Config)
+	if err != nil {
+		println("serial.Open: %v", err.Error())
+		return nil
+	}
 
-	return data
+	// запрос габаритов коробки
+	data := p.SendBytes(command, countRead, p.commandID)
+
+	if data != nil && data[0] == p.commandID {
+		return data
+	}
+
+	return nil
 }

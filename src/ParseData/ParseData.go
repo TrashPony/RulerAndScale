@@ -70,7 +70,7 @@ func ParseScaleData(data *TransportData.ScaleResponse) (weightBox float64) {
 	return
 }
 
-func ParseRulerData(data []byte) (widthBox, heightBox, lengthBox int, onlyWeight bool) {
+func ParseRulerData(data []byte, command []byte) (widthBox, heightBox, lengthBox int) {
 
 	/*
 
@@ -88,9 +88,21 @@ func ParseRulerData(data []byte) (widthBox, heightBox, lengthBox int, onlyWeight
 
 	*/
 
-	widthBox = rulerParse([]byte{data[0], data[1], data[2], data[3]}, 0x0B)    //ширина
-	heightBox = rulerParse([]byte{data[4], data[5], data[6], data[7]}, 0x16)   //высота
-	lengthBox = rulerParse([]byte{data[8], data[9], data[10], data[11]}, 0x21) //длина
+	if command != nil && (command[0] == 0x88 || command[0] == 0x89) {
+		widthBox = rulerParse([]byte{data[1], data[2], data[3], data[4]}, 0x0B)     //ширина
+		heightBox = rulerParse([]byte{data[5], data[6], data[7], data[8]}, 0x16)    //высота
+		lengthBox = rulerParse([]byte{data[9], data[10], data[11], data[12]}, 0x21) //длина
+	}
+
+	return
+}
+
+func ParseRulerIndicationData(data []byte, command []byte) (left, right, top, back int) {
+
+	left = rulerParse([]byte{data[1], data[2], data[3], data[4]}, 0x0B)
+	right = rulerParse([]byte{data[5], data[6], data[7], data[8]}, 0xBB)
+	top = rulerParse([]byte{data[9], data[10], data[11], data[12]}, 0x16)
+	back = rulerParse([]byte{data[13], data[14], data[15], data[16]}, 0x21)
 
 	return
 }

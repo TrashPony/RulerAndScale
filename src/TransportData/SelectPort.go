@@ -4,6 +4,7 @@ import (
 	"github.com/jacobsa/go-serial/serial"
 	"strconv"
 	"sync"
+	"time"
 )
 
 var Ports = InitPortStorage()
@@ -51,6 +52,8 @@ func SelectPort() {
 	portClass := []string{"/dev/ttyS", "/dev/ttyACM", "/dev/ttyUSB"}
 
 	for {
+		time.Sleep(1000 * time.Millisecond)
+
 		for _, nameClass := range portClass {
 			for i := 0; i < 20; i++ {
 
@@ -72,44 +75,44 @@ func SelectPort() {
 	}
 }
 
-//func FindScale(portName string) (port *Port) {
-//
-//	weightConfig := &serial.OpenOptions{
-//		Name: portName,
-//		Baud:        4800,
-//		Parity:      'E',
-//		ReadTimeout: time.Millisecond * 200,
-//	}
-//
-//	port = &Port{Name: portName, Config: weightConfig}
-//	connect := port.Connect()
-//	if connect == nil {
-//		return nil
-//	}
-//
-//	connect.Flush()
-//
-//	_, err := connect.Write([]byte{0x48})
-//	if err != nil {
-//		connect.Close()
-//		return nil
-//	}
-//
-//	buf := make([]byte, 2)
-//	n, err := connect.Read(buf)
-//
-//	if err != nil {
-//		connect.Close()
-//		return nil
-//	} else {
-//		if n == 2 && (buf[0] == 128 || buf[0] == 192) {
-//			println("Весы подключены к порту " + portName)
-//			return port
-//		} else {
-//			return nil
-//		}
-//	}
-//}
+func FindScale(portName string) *Port {
+	println(portName)
+	weightConfig := serial.OpenOptions{
+		PortName:              portName,
+		BaudRate:              4800,
+		ParityMode:            serial.PARITY_EVEN,
+		DataBits:              8,
+		StopBits:              1,
+		InterCharacterTimeout: 200,
+	}
+
+	connect, err := serial.Open(weightConfig)
+	if err != nil {
+		println("serial.Open: %v", err.Error())
+		return nil
+	}
+
+	_, err = connect.Write([]byte{0x48})
+	if err != nil {
+		connect.Close()
+		return nil
+	}
+
+	buf := make([]byte, 2)
+	n, err := connect.Read(buf)
+
+	if err != nil {
+		connect.Close()
+		return nil
+	} else {
+		if n == 2 && (buf[0] == 128 || buf[0] == 192) {
+			println("Весы подключены к порту " + portName)
+			return &Port{Name: portName, Config: &weightConfig, Connection: connect}
+		} else {
+			return nil
+		}
+	}
+}
 
 func FindRuler(portName string) *Port {
 
@@ -143,15 +146,6 @@ func FindRuler(portName string) *Port {
 	} else {
 		if n == 4 && buf[0] == 127 {
 			println("Линейка подключена к порту " + portName)
-
-			connect.Close()
-			rulerConfig.MinimumReadSize = 12
-			connect, err = serial.Open(rulerConfig)
-			if err != nil {
-				println("serial.Open: %v", err.Error())
-				return nil
-			}
-
 			return &Port{Name: portName, Config: &rulerConfig, Connection: connect}
 		} else {
 			return nil
