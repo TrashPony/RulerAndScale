@@ -1,6 +1,7 @@
 package TransportData
 
 import (
+	"errors"
 	"github.com/jacobsa/go-serial/serial"
 )
 
@@ -27,7 +28,7 @@ func SendScaleCommand(port *Port) *ScaleResponse {
 	}
 }
 
-func (p *Port) SendRulerCommand(command []byte, countRead int) []byte {
+func (p *Port) SendRulerCommand(command []byte, countRead int) ([]byte, error) {
 
 	p.mx.Lock()
 	defer p.mx.Unlock()
@@ -44,15 +45,31 @@ func (p *Port) SendRulerCommand(command []byte, countRead int) []byte {
 	p.Connection, err = serial.Open(*p.Config)
 	if err != nil {
 		println("serial.Open: %v", err.Error())
-		return nil
+		return nil, err
 	}
 
 	// запрос габаритов коробки
 	data := p.SendBytes(command, countRead, p.commandID)
 
 	if data != nil && data[0] == p.commandID {
-		return data
+		return data, nil
+	} else {
+		// иногда сериал порт посылает прошлые команды
+		countTryRead := 5
+		for countTryRead == 0 {
+
+			data = make([]byte, countRead)
+			_, err = p.Connection.Read(data)
+			if err != nil {
+				println("ошибка чтения: " + err.Error())
+			}
+
+			if data[0] == p.commandID {
+				return data, nil
+			}
+			countTryRead--
+		}
 	}
 
-	return nil
+	return nil, errors.New("wrong_data")
 }

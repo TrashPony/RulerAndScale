@@ -35,7 +35,13 @@ func Controller() {
 
 	for {
 
-		//time.Sleep(10 * time.Millisecond)
+		time.Sleep(100 * time.Millisecond)
+
+		if len(websocket.UsersWs) > 0 {
+			println("происходит дебаг :D")
+			time.Sleep(1000 * time.Millisecond)
+			continue
+		}
 
 		correctWeight := -1
 		widthBox, heightBox, lengthBox := -1, -1, -1
@@ -56,13 +62,20 @@ func Controller() {
 
 		rulerPort := TransportData.Ports.GetPort("ruler")
 		if rulerPort != nil {
-			rulerResponse := rulerPort.SendRulerCommand([]byte{0x88}, 13)
-			if rulerResponse == nil {
+			rulerResponse, err := rulerPort.SendRulerCommand([]byte{0x88}, 13)
+
+			if rulerResponse == nil && err.Error() != "wrong_data" {
 
 				println("Линейка отвалилась")
 				TransportData.Ports.ResetPort("ruler")
 
 			} else {
+
+				if err != nil {
+					time.Sleep(1000 * time.Millisecond)
+					continue
+				}
+
 				widthBox, heightBox, lengthBox = ParseData.ParseRulerData(rulerResponse, []byte{0x88})
 			}
 		}

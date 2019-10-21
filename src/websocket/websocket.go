@@ -9,7 +9,7 @@ import (
 	"sync"
 )
 
-var usersWs = make(map[*websocket.Conn]bool)
+var UsersWs = make(map[*websocket.Conn]bool)
 var sendPipe = make(chan Message)
 var mutex = &sync.Mutex{}
 
@@ -50,7 +50,7 @@ func HandleConnections(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	usersWs[ws] = true
+	UsersWs[ws] = true
 
 	go Reader(ws)
 }
@@ -64,7 +64,7 @@ func Reader(ws *websocket.Conn) {
 		var msg Message
 		err := ws.ReadJSON(&msg)
 		if err != nil { // Если есть ошибка при чтение из сокета вероятно клиент отключился, удаляем его сессию
-			delete(usersWs, ws)
+			delete(UsersWs, ws)
 			ws.Close()
 			return
 		}
@@ -72,20 +72,28 @@ func Reader(ws *websocket.Conn) {
 		if msg.Event == "Debug" {
 			rulerPort := TransportData.Ports.GetPort("ruler")
 
-			data := rulerPort.SendRulerCommand([]byte{0x89}, 13)
-			widthMax, heightMax, lengthMax := ParseData.ParseRulerData(data, []byte{0x89})
+			if rulerPort != nil {
+				rulerResponse, _ := rulerPort.SendRulerCommand([]byte{0x89}, 41)
+				if rulerResponse == nil && err.Error() != "wrong_data" {
+					println("Линейка отвалилась")
+					TransportData.Ports.ResetPort("ruler")
+					continue
+				} else {
+					if err != nil {
+						continue
+					}
+				}
 
-			data = rulerPort.SendRulerCommand([]byte{0x80}, 17)
-			left, right, top, back := ParseData.ParseRulerIndicationData(data, []byte{0x80})
+				left, right, top, back, widthMax, heightMax, lengthMax, width, height, length := ParseData.ParseRulerIndicationData(rulerResponse, []byte{0x89})
 
-			data = rulerPort.SendRulerCommand([]byte{0x88}, 13)
-			width, height, length := ParseData.ParseRulerData(data, []byte{0x89})
-
-			sendPipe <- Message{
-				Event:         "Debug",
-				ScalePlatform: scalePlatform,
-				RulerOption:   RulerOption{WidthMax: widthMax, TopMax: heightMax, LengthMax: lengthMax},
-				Indication:    Indication{Left: left, Right: right, Top: top, Back: back, WidthBox: width, HeightBox: height, LengthBox: length},
+				sendPipe <- Message{
+					Event:         "Debug",
+					ScalePlatform: scalePlatform,
+					RulerOption:   RulerOption{WidthMax: widthMax, TopMax: heightMax, LengthMax: lengthMax},
+					Indication:    Indication{Left: left, Right: right, Top: top, Back: back, WidthBox: width, HeightBox: height, LengthBox: length},
+				}
+			} else {
+				// TODO лийнека не подключена
 			}
 		}
 	}
@@ -96,12 +104,12 @@ func Sender() {
 		msg := <-sendPipe
 
 		mutex.Lock()
-		for ws, _ := range usersWs {
+		for ws, _ := range UsersWs {
 
 			err := ws.WriteJSON(msg)
 
 			if err != nil {
-				delete(usersWs, ws)
+				delete(UsersWs, ws)
 				ws.Close()
 			}
 		}

@@ -14,9 +14,9 @@ TroykaI2CHub splitter;
 
 // Дальномер
 #define LEFT_PING_LAN  0
-#define RIGHT_PING_LAN 1
-#define TOP_PING_LAN   2
-#define BACK_PING_LAN  3
+#define RIGHT_PING_LAN 2
+#define TOP_PING_LAN   4
+#define BACK_PING_LAN  6
 
 // Диоды
 #define RED_LED_PIN  9
@@ -43,9 +43,6 @@ Adafruit_VL53L0X lox = Adafruit_VL53L0X();
 
 void setup()
 {
-  // подключаем лазер
-  lox.begin();
-
   pinMode(RED_LED_PIN, OUTPUT);
   pinMode(GREEN_LED_PIN, OUTPUT);
   pinMode(BUTTON, INPUT);
@@ -101,25 +98,20 @@ void loop()
       Serial.write(buf, sizeof(buf));
     }
 
-    // взятие текущих настроек линейки
+    // взятие текущих настроек и показаний линейки
     if (incomingByte == 0x89) {
-      byte buf[13] = {
-        ID,
-        0x2D, 0x0B, WIDTH_MAX, 0x7B,
-        0x2D, 0x16, TOP_MAX, 0x7B,
-        0x2D, 0x21, LENGTH_MAX, 0x7B};
-
-      Serial.write(buf, sizeof(buf));
-    }
-
-    // запрос индикации
-    if (incomingByte == 0x80) {
-      byte buf[17] = {
+      byte buf[41] = {
         ID,
         0x2D, 0x0B, left, 0x7B,
         0x2D, 0xBB, right, 0x7B,
         0x2D, 0x16, top, 0x7B,
-        0x2D, 0x21, back, 0x7B};
+        0x2D, 0x21, back, 0x7B,
+        0x2D, 0x0B, WIDTH_MAX, 0x7B,
+        0x2D, 0x16, TOP_MAX, 0x7B,
+        0x2D, 0x21, LENGTH_MAX, 0x7B,
+        0x2D, 0x0B, widthBox, 0x7B,
+        0x2D, 0x16, heightBox, 0x7B,
+        0x2D, 0x21, lengthBox, 0x7B};
 
       Serial.write(buf, sizeof(buf));
     }
@@ -142,9 +134,10 @@ void loop()
 }
 
 int getDistance(int pin) {
-
   // pin - указываем номер сети для лазера откуда брать данные
   splitter.setBusChannel(pin);
+  delay(10);
+  lox.begin();
 
   return getIndication();
 }

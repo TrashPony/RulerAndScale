@@ -10,25 +10,71 @@
 
 <style>
     #main {
-        height: 600px;
-        width: 800px;
+        height: 900px;
+        width: 1300px;
         border: 1px solid black;
         margin: 0 auto;
     }
 
-    #canvas {
+    #canvasTop, #canvasFront {
         height: 400px;
-        width: 400px;
+        width: 648px;
         border: 1px solid black;
         float: left;
+    }
+
+    #info {
+        clear: both;
+    }
+
+    #info div {
+        float: left;
+        width: 648px;
+    }
+
+    #Settings {
+
+    }
+
+    #Settings label {
+        display: block;
+        width: 400px;
+        margin-top: 10px;
+    }
+
+    #Settings label input {
+        float: right;
     }
 </style>
 
 <body>
 <div id="main">
-    <canvas id="canvas">
+    <canvas id="canvasTop"></canvas>
+    <canvas id="canvasFront"></canvas>
 
-    </canvas>
+    <div id="info">
+        <div>
+            <h3>Показания</h3>
+            <div id="indications"></div>
+        </div>
+        <div>
+            <h3>Настройки</h3>
+            <div id="Settings">
+                <label>
+                    Ширина между левым и правым датчиком:
+                    <input type="number" value="0" min="0" max="200">
+                </label>
+                <label>
+                    Высота от верхнего датчика до весов:
+                    <input type="number" value="0" min="0" max="200">
+                </label>
+                <label>
+                    Длинна от дальнего датчика до края стола:
+                    <input type="number" value="0" min="0" max="200">
+                </label>
+            </div>
+        </div>
+    </div>
 </div>
 </body>
 </html>
