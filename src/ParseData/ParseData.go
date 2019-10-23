@@ -1,8 +1,6 @@
 package ParseData
 
-import "github.com/TrashPony/RulerAndScale/TransportData"
-
-func ParseScaleData(data *TransportData.ScaleResponse) (weightBox float64) {
+func ParseScaleData(data []byte) (weightBox float64) {
 	/*
 		   80 00
 		   EC 00
@@ -13,15 +11,15 @@ func ParseScaleData(data *TransportData.ScaleResponse) (weightBox float64) {
 		00 (2я строка) - 0 это (+) 80 это (-) отрицательный , положительный вес.
 	*/
 
-	if data.ReadyAndDiscreteness[0] == 128 && (data.Weight[0] != 0 || data.Weight[1] != 0) {
+	if data[0] == 128 && (data[2] != 0 || data[3] != 0) {
 
 		// data.ReadyAndDiscreteness[0] - готовность
 		// data.ReadyAndDiscreteness[1] - дискретность
 
-		if data.ReadyAndDiscreteness[1] == 0 {
-			if data.Weight[1] == 0 { // вес уместился в 1н байт
+		if data[1] == 0 {
+			if data[3] == 0 { // вес уместился в 1н байт
 
-				weightBox = float64(data.Weight[0])
+				weightBox = float64(data[2])
 
 				if weightBox <= 256 {
 					return
@@ -30,9 +28,9 @@ func ParseScaleData(data *TransportData.ScaleResponse) (weightBox float64) {
 				}
 			}
 
-			if data.Weight[1] != 0 { // не уместился
+			if data[3] != 0 { // не уместился
 
-				weightBox = (256 * float64(data.Weight[1])) + float64(data.Weight[0])
+				weightBox = (256 * float64(data[3])) + float64(data[2])
 
 				if weightBox < 15000 {
 					return
@@ -42,10 +40,10 @@ func ParseScaleData(data *TransportData.ScaleResponse) (weightBox float64) {
 			}
 		}
 
-		if data.ReadyAndDiscreteness[1] == 4 {
-			if data.Weight[1] == 0 { // вес уместился в 1н байт
+		if data[1] == 4 {
+			if data[3] == 0 { // вес уместился в 1н байт
 
-				weightBox = float64(data.Weight[0]) * 10
+				weightBox = float64(data[2]) * 10
 
 				if weightBox <= 2560 {
 					return
@@ -54,9 +52,9 @@ func ParseScaleData(data *TransportData.ScaleResponse) (weightBox float64) {
 				}
 			}
 
-			if data.Weight[1] != 0 { // не уместился
+			if data[3] != 0 { // не уместился
 
-				weightBox = ((256 * float64(data.Weight[1])) + float64(data.Weight[0])) * 10
+				weightBox = ((256 * float64(data[3])) + float64(data[2])) * 10
 
 				if weightBox < 60000 {
 					return

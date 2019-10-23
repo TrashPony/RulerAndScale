@@ -22,9 +22,9 @@ TroykaI2CHub splitter;
 #define RED_LED_PIN  9
 #define GREEN_LED_PIN  5
 
-#define TOP_MAX          29
-#define WIDTH_MAX        20
-#define LENGTH_MAX       19
+int TOP_MAX    =      29;
+int WIDTH_MAX   =     20;
+int LENGTH_MAX   =    19;
 
 boolean onlyWeight = false;
 
@@ -43,11 +43,12 @@ Adafruit_VL53L0X lox = Adafruit_VL53L0X();
 
 void setup()
 {
+
   pinMode(RED_LED_PIN, OUTPUT);
   pinMode(GREEN_LED_PIN, OUTPUT);
   pinMode(BUTTON, INPUT);
 
-  Serial.begin(19200);
+  Serial.begin(115200);
   // ждем пока откроется сериал порт
   while(!Serial) {}
 
@@ -56,6 +57,8 @@ void setup()
 
   // ждём одну секунду
   delay(1000);
+
+  lox.begin();
 }
 
 void loop()
@@ -70,7 +73,7 @@ void loop()
       digitalWrite(RED_LED_PIN, LOW);
       digitalWrite(GREEN_LED_PIN, HIGH);
     }
-    delay(500);
+    //delay(500);
   }
 
   Indication();
@@ -80,11 +83,21 @@ void loop()
     byte incomingByte = Serial.read();
     byte ID = Serial.read();
 
-    Serial.flush();
+    if (incomingByte == 0x90) {
+      TOP_MAX = int(ID);
+    }
+
+    if (incomingByte == 0x91) {
+      WIDTH_MAX = int(ID);
+    }
+
+    if (incomingByte == 0x92) {
+      LENGTH_MAX = int(ID);
+    }
 
     if (incomingByte == 0x95) {
-      byte buf[4] = {0x7F, 0x7F, 0x7F, 0x7F};
-      Serial.write(buf, 4);
+      byte buf[1] = {0x7F};
+      Serial.write(buf, 1);
     }
 
     // запрос габаритов
@@ -133,11 +146,15 @@ void loop()
   }
 }
 
+int start = 0;
 int getDistance(int pin) {
   // pin - указываем номер сети для лазера откуда брать данные
   splitter.setBusChannel(pin);
-  delay(10);
-  lox.begin();
+  delay(100);
+
+  if (0 == start%20 ) {
+    lox.begin();
+  }
 
   return getIndication();
 }
@@ -162,6 +179,7 @@ int getIndication() {
 }
 
 void Indication() {
+  start++;
 
   right = getDistance(RIGHT_PING_LAN);
   left = getDistance(LEFT_PING_LAN);
@@ -204,6 +222,6 @@ void Indication() {
     Serial.println(lengthBox);
 
     Serial.println("///////////////////////////////////////");
-    delay(2500);
+    //delay(2500);
   }
 }

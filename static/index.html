@@ -38,7 +38,7 @@
 
     #Settings label {
         display: block;
-        width: 400px;
+        width: 450px;
         margin-top: 10px;
     }
 
@@ -62,15 +62,18 @@
             <div id="Settings">
                 <label>
                     Ширина между левым и правым датчиком:
-                    <input type="number" value="0" min="0" max="200">
+                    <input type="button" value="Задать" onclick="SetMax('SetWidth', 'setWidth')">
+                    <input type="number" value="0" min="0" max="200" id="setWidth">
                 </label>
                 <label>
                     Высота от верхнего датчика до весов:
-                    <input type="number" value="0" min="0" max="200">
+                    <input type="button" value="Задать" onclick="SetMax('SetTop', 'setTop')">
+                    <input type="number" value="0" min="0" max="200" id="setTop">
                 </label>
                 <label>
                     Длинна от дальнего датчика до края стола:
-                    <input type="number" value="0" min="0" max="200">
+                    <input type="button" value="Задать" onclick="SetMax('SetLength', 'setLength')">
+                    <input type="number" value="0" min="0" max="200" id="setLength">
                 </label>
             </div>
         </div>

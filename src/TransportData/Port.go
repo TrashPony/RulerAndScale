@@ -1,6 +1,7 @@
 package TransportData
 
 import (
+	"errors"
 	"github.com/jacobsa/go-serial/serial"
 	"io"
 	"sync"
@@ -14,7 +15,20 @@ type Port struct {
 	mx         sync.Mutex
 }
 
-func (p *Port) SendBytes(command []byte, countRead int, id byte) (data []byte) {
+func (p *Port) Reconnect(countRead int) error {
+	p.Connection.Close()
+	p.Config.MinimumReadSize = uint(countRead)
+	var err error
+	p.Connection, err = serial.Open(*p.Config)
+	if err != nil {
+		println("serial.Open: %v", err.Error())
+		return err
+	}
+
+	return nil
+}
+
+func (p *Port) SendBytes(command []byte, countRead int, id byte) {
 
 	if id > 0 {
 		command = append(command, id)
@@ -23,16 +37,23 @@ func (p *Port) SendBytes(command []byte, countRead int, id byte) (data []byte) {
 	_, err := p.Connection.Write(command)
 	if err != nil {
 		println("ошибка записи" + err.Error())
-		return data
 	}
 
-	//time.Sleep(150 * time.Millisecond)
-	data = make([]byte, countRead)
+	return
+}
 
-	_, err = p.Connection.Read(data)
+func (p *Port) ReadBytes(countRead int) ([]byte, error) {
+
+	data := make([]byte, countRead)
+
+	n, err := p.Connection.Read(data)
 	if err != nil {
 		println("ошибка чтения: " + err.Error())
 	}
 
-	return
+	if n == countRead {
+		return data, nil
+	} else {
+		return nil, errors.New("wrong")
+	}
 }

@@ -35,8 +35,6 @@ func Controller() {
 
 	for {
 
-		time.Sleep(100 * time.Millisecond)
-
 		if len(websocket.UsersWs) > 0 {
 			println("происходит дебаг :D")
 			time.Sleep(1000 * time.Millisecond)
@@ -49,14 +47,23 @@ func Controller() {
 
 		scalePort := TransportData.Ports.GetPort("scale")
 		if scalePort != nil {
-			scaleResponse := TransportData.SendScaleCommand(scalePort)
-			if scaleResponse == nil {
+			scaleResponse, err := scalePort.SendScaleCommand()
+			if scaleResponse == nil && err.Error() != "wrong" {
 
 				println("Весы отвалились")
 				TransportData.Ports.ResetPort("scale")
 
 			} else {
-				correctWeight = int(ParseData.ParseScaleData(scaleResponse))
+
+				if err != nil && err.Error() == "wrong" {
+				} else {
+					correctWeight = int(ParseData.ParseScaleData(scaleResponse))
+					if correctWeight == 0 { // todo не уверен что это работает как надо :D
+						// иногда сериал порт посылает прошлые данные и от них надо избавится или смещает биты
+						scalePort.Reconnect(0)
+						scalePort.ReadBytes(5)
+					}
+				}
 			}
 		}
 
@@ -80,13 +87,12 @@ func Controller() {
 			}
 		}
 
+		if widthBox > 0 || heightBox > 0 || lengthBox > 0 || correctWeight > 0 {
+			println(widthBox, heightBox, lengthBox, correctWeight)
+		}
+
 		// значения не могут быть отрицаельными если это так то это ошибка
 		if correctWeight < 0 || widthBox < 0 || heightBox < 0 || lengthBox < 0 {
-
-			if widthBox > 0 || heightBox > 0 || lengthBox > 0 {
-				println(widthBox, heightBox, lengthBox)
-			}
-
 			continue
 		}
 
@@ -95,9 +101,11 @@ func Controller() {
 			checkScaleData, led := ParseData.CheckData(correctWeight, widthBox, heightBox, lengthBox, onlyWeight)
 
 			if led {
-				rulerPort.Connection.Write([]byte{0x66}) // байт готовности, включает диод
+				println("led1")
+				rulerPort.SendRulerCommand([]byte{0x66}, 0) // байт готовности, включает диод
 			} else {
-				rulerPort.Connection.Write([]byte{0x55}) // байт готовности, выключает диод
+				println("led2")
+				rulerPort.SendRulerCommand([]byte{0x55}, 0) // байт готовности, выключает диод
 			}
 
 			if checkScaleData {

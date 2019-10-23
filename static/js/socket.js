@@ -5,15 +5,14 @@ function Connect() {
     console.log("Websocket - status: " + ws.readyState);
 
     ws.onopen = function () {
-        setInterval(function () {
-            ws.send(JSON.stringify({event: "Debug"}));
-        }, 100);
+        ws.send(JSON.stringify({event: "Debug"}));
         console.log("Connection opened..." + this.readyState);
     };
 
     ws.onmessage = function (msg) {
         DrawTop(JSON.parse(msg.data));
         DrawFront(JSON.parse(msg.data));
+        ws.send(JSON.stringify({event: "Debug"}));
     };
 
     ws.onerror = function (msg) {
@@ -28,7 +27,6 @@ function Connect() {
 let Scale = 4;
 
 function DrawTop(data) {
-    console.log(data)
     let canvas = document.getElementById("canvasTop");
     canvas.width = 648;
     canvas.height = 400;
@@ -250,6 +248,10 @@ function DrawFront(data) {
             box.width,
             -box.height);
     }
+}
+
+function SetMax(setter, id) {
+    ws.send(JSON.stringify({event: setter, count: Number(document.getElementById(id).value)}));
 }
 
 CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {

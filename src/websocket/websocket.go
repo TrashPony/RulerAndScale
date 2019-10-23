@@ -18,6 +18,7 @@ type Message struct {
 	ScalePlatform ScalePlatform `json:"scale_platform"`
 	RulerOption   RulerOption   `json:"ruler_option"`
 	Indication    Indication    `json:"indication"`
+	Count         int           `json:"count"`
 }
 
 type ScalePlatform struct {
@@ -95,6 +96,22 @@ func Reader(ws *websocket.Conn) {
 			} else {
 				// TODO лийнека не подключена
 			}
+			continue
+		}
+
+		if msg.Event == "SetTop" {
+			rulerPort := TransportData.Ports.GetPort("ruler")
+			rulerPort.SendBytes([]byte{0x90, byte(msg.Count)}, 0, 0)
+		}
+
+		if msg.Event == "SetWidth" {
+			rulerPort := TransportData.Ports.GetPort("ruler")
+			rulerPort.SendBytes([]byte{0x91, byte(msg.Count)}, 0, 0)
+		}
+
+		if msg.Event == "SetLength" {
+			rulerPort := TransportData.Ports.GetPort("ruler")
+			rulerPort.SendBytes([]byte{0x92, byte(msg.Count)}, 0, 0)
 		}
 	}
 }

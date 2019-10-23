@@ -60,15 +60,11 @@ func SelectPort() {
 				portName := nameClass + strconv.Itoa(i)
 
 				if Ports.GetPort("scale") == nil {
-					//Ports.SetPort(FindScale(portName), "scale")
+					Ports.SetPort(FindScale(portName), "scale")
 				}
 
 				if Ports.GetPort("ruler") == nil {
 					Ports.SetPort(FindRuler(portName), "ruler")
-				}
-
-				if Ports.GetPort("scale") != nil && Ports.GetPort("ruler") != nil {
-					println("Все устройства подключены.")
 				}
 			}
 		}
@@ -76,19 +72,18 @@ func SelectPort() {
 }
 
 func FindScale(portName string) *Port {
-	println(portName)
 	weightConfig := serial.OpenOptions{
 		PortName:              portName,
 		BaudRate:              4800,
 		ParityMode:            serial.PARITY_EVEN,
 		DataBits:              8,
 		StopBits:              1,
-		InterCharacterTimeout: 200,
+		InterCharacterTimeout: 300,
 	}
 
 	connect, err := serial.Open(weightConfig)
 	if err != nil {
-		println("serial.Open: %v", err.Error())
+		//println("serial.Open: %v", err.Error())
 		return nil
 	}
 
@@ -118,11 +113,11 @@ func FindRuler(portName string) *Port {
 
 	rulerConfig := serial.OpenOptions{
 		PortName:              portName,
-		BaudRate:              19200,
+		BaudRate:              115200,
 		DataBits:              8,
 		StopBits:              1,
 		MinimumReadSize:       0,
-		InterCharacterTimeout: 200,
+		InterCharacterTimeout: 500,
 	}
 
 	connect, err := serial.Open(rulerConfig)
@@ -137,16 +132,17 @@ func FindRuler(portName string) *Port {
 		return nil
 	}
 
-	buf := make([]byte, 4)
-	n, err := connect.Read(buf)
+	buf := make([]byte, 1)
+	_, err = connect.Read(buf)
 
 	if err != nil {
 		connect.Close()
 		return nil
 	} else {
-		if n == 4 && buf[0] == 127 {
+		if buf[0] == 127 {
 			println("Линейка подключена к порту " + portName)
-			return &Port{Name: portName, Config: &rulerConfig, Connection: connect}
+			port := &Port{Name: portName, Config: &rulerConfig, Connection: connect}
+			return port
 		} else {
 			return nil
 		}
