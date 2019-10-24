@@ -14,6 +14,7 @@
         width: 1300px;
         border: 1px solid black;
         margin: 0 auto;
+        position: relative;
     }
 
     #canvasTop, #canvasFront {
@@ -25,11 +26,12 @@
 
     #info {
         clear: both;
+        padding: 5px;
     }
 
-    #info div {
+    #info > div {
         float: left;
-        width: 648px;
+        width: 638px;
     }
 
     #Settings {
@@ -45,6 +47,36 @@
     #Settings label input {
         float: right;
     }
+
+    .scaleButton {
+        position: absolute;
+        right: 4px;
+        height: 20px;
+        width: 20px;
+        border-radius: 3px;
+        background: #918c97;
+        text-align: center;
+        user-select: none;
+    }
+
+    .scaleButton:hover {
+        background: #cdc6d2;
+        cursor: default;
+    }
+
+    .scaleButton:active {
+        transform: scale(0.96);
+    }
+
+    #info #weightIndication {
+        width: 300px;
+        height: 50px;
+        background: black;
+        color: greenyellow;
+        font-size: 40px;
+        padding-left: 20px;
+    }
+
 </style>
 
 <body>
@@ -52,10 +84,17 @@
     <canvas id="canvasTop"></canvas>
     <canvas id="canvasFront"></canvas>
 
+    <div class="scaleButton" style="top: 4px" onclick="scale(0.1)">+</div>
+    <div class="scaleButton" style="top: 26px" onclick="scale(-0.1)">-</div>
+
     <div id="info">
         <div>
             <h3>Показания</h3>
-            <div id="indications"></div>
+            <h5>Вес</h5>
+            <div id="weightIndication"></div>
+            <div id="indications">
+
+            </div>
         </div>
         <div>
             <h3>Настройки</h3>
@@ -63,18 +102,53 @@
                 <label>
                     Ширина между левым и правым датчиком:
                     <input type="button" value="Задать" onclick="SetMax('SetWidth', 'setWidth')">
-                    <input type="number" value="0" min="0" max="200" id="setWidth">
+                    <input type="number" value="0" min="0" max="200" id="setWidth" oninput="setMax = true;">
                 </label>
                 <label>
                     Высота от верхнего датчика до весов:
                     <input type="button" value="Задать" onclick="SetMax('SetTop', 'setTop')">
-                    <input type="number" value="0" min="0" max="200" id="setTop">
+                    <input type="number" value="0" min="0" max="200" id="setTop" oninput="setMax = true;">
                 </label>
                 <label>
                     Длинна от дальнего датчика до края стола:
                     <input type="button" value="Задать" onclick="SetMax('SetLength', 'setLength')">
-                    <input type="number" value="0" min="0" max="200" id="setLength">
+                    <input type="number" value="0" min="0" max="200" id="setLength" oninput="setMax = true;">
                 </label>
+
+                <label style="margin-top: 20px">
+                    Только Вес:
+                    <input type="checkbox" disabled id="onlyWeight">
+                </label>
+            </div>
+            <h3>Устройства: </h3>
+            <div>(Поиск устройства может занимать несколько минут)</div>
+            <div>
+                <h5>Линейка: </h5>
+                <table>
+                    <tr>
+                        <td>Порт:</td>
+                        <td id="rulerPort"></td>
+                    </tr>
+                    <tr>
+                        <td><input type="button" value="Переподключить"
+                                   onclick="ws.send(JSON.stringify({event: 'ResetRuler'}));"></td>
+                        <td></td>
+                    </tr>
+                </table>
+            </div>
+            <div>
+                <h5>Весы: </h5>
+                <table>
+                    <tr>
+                        <td>Порт:</td>
+                        <td id="scalePort"></td>
+                    </tr>
+                    <tr>
+                        <td><input type="button" value="Переподключить"
+                                   onclick="ws.send(JSON.stringify({event: 'ResetScale'}));"></td>
+                        <td></td>
+                    </tr>
+                </table>
             </div>
         </div>
     </div>

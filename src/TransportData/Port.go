@@ -16,6 +16,11 @@ type Port struct {
 }
 
 func (p *Port) Reconnect(countRead int) error {
+
+	if p.Connection == nil {
+		return errors.New("no port")
+	}
+
 	p.Connection.Close()
 	p.Config.MinimumReadSize = uint(countRead)
 	var err error

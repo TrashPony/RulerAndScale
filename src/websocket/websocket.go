@@ -14,11 +14,13 @@ var sendPipe = make(chan Message)
 var mutex = &sync.Mutex{}
 
 type Message struct {
-	Event         string        `json:"event"`
-	ScalePlatform ScalePlatform `json:"scale_platform"`
-	RulerOption   RulerOption   `json:"ruler_option"`
-	Indication    Indication    `json:"indication"`
-	Count         int           `json:"count"`
+	Event         string              `json:"event"`
+	ScalePlatform ScalePlatform       `json:"scale_platform"`
+	RulerOption   RulerOption         `json:"ruler_option"`
+	Indication    Indication          `json:"indication"`
+	Count         int                 `json:"count"`
+	ScalePort     *TransportData.Port `json:"scale_port"`
+	RulerPort     *TransportData.Port `json:"ruler_port"`
 }
 
 type ScalePlatform struct {
@@ -27,9 +29,10 @@ type ScalePlatform struct {
 }
 
 type RulerOption struct {
-	TopMax    int `json:"top_max"`
-	WidthMax  int `json:"width_max"`
-	LengthMax int `json:"length_max"`
+	TopMax     int  `json:"top_max"`
+	WidthMax   int  `json:"width_max"`
+	LengthMax  int  `json:"length_max"`
+	OnlyWeight bool `json:"only_weight"`
 }
 
 type Indication struct {
@@ -40,6 +43,7 @@ type Indication struct {
 	WidthBox  int `json:"width_box"`
 	HeightBox int `json:"height_box"`
 	LengthBox int `json:"length_box"`
+	Weight    int `json:"correct_weight"`
 }
 
 func HandleConnections(w http.ResponseWriter, r *http.Request) {
@@ -72,31 +76,48 @@ func Reader(ws *websocket.Conn) {
 
 		if msg.Event == "Debug" {
 			rulerPort := TransportData.Ports.GetPort("ruler")
+			scalePort := TransportData.Ports.GetPort("scale")
+
+			var left, right, top, back, widthMax, heightMax, lengthMax, width, height, length, correctWeight int
+			var onlyWeight bool
 
 			if rulerPort != nil {
-				rulerResponse, _ := rulerPort.SendRulerCommand([]byte{0x89}, 41)
-				if rulerResponse == nil && err.Error() != "wrong_data" {
-					println("Линейка отвалилась")
+				rulerResponse, err := rulerPort.SendRulerCommand([]byte{0x89}, 42)
+				if err != nil && err.Error() != "wrong_data" {
 					TransportData.Ports.ResetPort("ruler")
-					continue
 				} else {
-					if err != nil {
-						continue
+					if rulerResponse != nil {
+						left, right, top, back, widthMax, heightMax, lengthMax, width, height, length, onlyWeight = ParseData.ParseRulerIndicationData(rulerResponse, []byte{0x89})
 					}
 				}
-
-				left, right, top, back, widthMax, heightMax, lengthMax, width, height, length := ParseData.ParseRulerIndicationData(rulerResponse, []byte{0x89})
-
-				sendPipe <- Message{
-					Event:         "Debug",
-					ScalePlatform: scalePlatform,
-					RulerOption:   RulerOption{WidthMax: widthMax, TopMax: heightMax, LengthMax: lengthMax},
-					Indication:    Indication{Left: left, Right: right, Top: top, Back: back, WidthBox: width, HeightBox: height, LengthBox: length},
-				}
-			} else {
-				// TODO лийнека не подключена
 			}
-			continue
+
+			if scalePort != nil {
+				scaleResponse, err := scalePort.SendScaleCommand()
+				if err != nil && err.Error() != "wrong" {
+					TransportData.Ports.ResetPort("scale")
+				} else {
+					if (err != nil && err.Error() == "wrong") || scaleResponse == nil {
+						correctWeight = -1
+					} else {
+						correctWeight = int(ParseData.ParseScaleData(scaleResponse))
+						if correctWeight == 0 {
+							// иногда сериал порт посылает прошлые данные и от них надо избавится или смещает биты
+							scalePort.Reconnect(0)
+							scalePort.ReadBytes(5)
+						}
+					}
+				}
+			}
+
+			sendPipe <- Message{
+				Event:         "Debug",
+				ScalePlatform: scalePlatform,
+				RulerOption:   RulerOption{WidthMax: widthMax, TopMax: heightMax, LengthMax: lengthMax, OnlyWeight: onlyWeight},
+				Indication:    Indication{Left: left, Right: right, Top: top, Back: back, WidthBox: width, HeightBox: height, LengthBox: length, Weight: correctWeight},
+				RulerPort:     rulerPort,
+				ScalePort:     scalePort,
+			}
 		}
 
 		if msg.Event == "SetTop" {
@@ -112,6 +133,14 @@ func Reader(ws *websocket.Conn) {
 		if msg.Event == "SetLength" {
 			rulerPort := TransportData.Ports.GetPort("ruler")
 			rulerPort.SendBytes([]byte{0x92, byte(msg.Count)}, 0, 0)
+		}
+
+		if msg.Event == "ResetRuler" {
+			TransportData.Ports.ResetPort("ruler")
+		}
+
+		if msg.Event == "ResetScale" {
+			TransportData.Ports.ResetPort("scale")
 		}
 	}
 }

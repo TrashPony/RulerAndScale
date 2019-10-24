@@ -44,7 +44,7 @@ func (p *Port) SendRulerCommand(command []byte, countRead int) ([]byte, error) {
 		// иногда сериал порт посылает прошлые данные и от них надо избавится
 		err := p.Reconnect(0)
 		if err != nil {
-			return nil, err
+			return nil, errors.New("wrong_data")
 		}
 
 		data, _ = p.ReadBytes(countRead)

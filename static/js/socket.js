@@ -12,6 +12,8 @@ function Connect() {
     ws.onmessage = function (msg) {
         DrawTop(JSON.parse(msg.data));
         DrawFront(JSON.parse(msg.data));
+        fillIndications(JSON.parse(msg.data));
+        console.log(JSON.parse(msg.data));
         ws.send(JSON.stringify({event: "Debug"}));
     };
 
@@ -250,7 +252,14 @@ function DrawFront(data) {
     }
 }
 
+function scale(diff) {
+    Scale += diff
+}
+
+let setMax = false;
+
 function SetMax(setter, id) {
+    setMax = false;
     ws.send(JSON.stringify({event: setter, count: Number(document.getElementById(id).value)}));
 }
 
@@ -266,3 +275,67 @@ CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
     this.closePath();
     return this;
 };
+
+function fillIndications(data) {
+    if (data.indication.correct_weight >= 0) {
+        document.getElementById("weightIndication").innerText = "Вес: " + data.indication.correct_weight;
+    }
+
+    document.getElementById("onlyWeight").checked = data.ruler_option.only_weight;
+
+    if (data.ruler_port) {
+        document.getElementById("rulerPort").innerText = data.ruler_port.Config.PortName;
+    } else {
+        document.getElementById("rulerPort").innerText = "Не найдено";
+    }
+
+    if (data.scale_port) {
+        document.getElementById("scalePort").innerText = data.scale_port.Config.PortName;
+    } else {
+        document.getElementById("scalePort").innerText = "Не найдено";
+    }
+
+    if (!setMax) {
+        document.getElementById("setWidth").value = data.ruler_option.width_max;
+        document.getElementById("setTop").value = data.ruler_option.top_max;
+        document.getElementById("setLength").value = data.ruler_option.length_max;
+    }
+
+    document.getElementById("indications").innerHTML = `
+        <h5>Показания дальномеров:</h5>
+        <table>
+            <tr>
+                <td>левый: </td>
+                <td>${data.indication.left}</td>
+            </tr>
+            <tr>
+                <td>правый: </td>
+                <td>${data.indication.right}</td>
+            </tr>
+            <tr>
+                <td>верхний: </td>
+                <td>${data.indication.top}</td>
+            </tr>
+            <tr>
+                <td>передний: </td>
+                <td>${data.indication.back}</td>
+            </tr>
+        </table>
+        
+        <h5>Размеры коробки:</h5>
+        <table>
+            <tr>
+                <td>длинна: </td>
+                <td>${data.indication.length_box}</td>
+            </tr>
+            <tr>
+                <td>ширина: </td>
+                <td>${data.indication.width_box}</td>
+            </tr>
+            <tr>
+                <td>высота: </td>
+                <td>${data.indication.height_box}</td>
+            </tr>
+        </table>
+    `
+}

@@ -69,7 +69,7 @@ func Controller() {
 
 		rulerPort := TransportData.Ports.GetPort("ruler")
 		if rulerPort != nil {
-			rulerResponse, err := rulerPort.SendRulerCommand([]byte{0x88}, 13)
+			rulerResponse, err := rulerPort.SendRulerCommand([]byte{0x88}, 14)
 
 			if rulerResponse == nil && err.Error() != "wrong_data" {
 
@@ -83,12 +83,12 @@ func Controller() {
 					continue
 				}
 
-				widthBox, heightBox, lengthBox = ParseData.ParseRulerData(rulerResponse, []byte{0x88})
+				widthBox, heightBox, lengthBox, onlyWeight = ParseData.ParseRulerData(rulerResponse, []byte{0x88})
 			}
 		}
 
 		if widthBox > 0 || heightBox > 0 || lengthBox > 0 || correctWeight > 0 {
-			println(widthBox, heightBox, lengthBox, correctWeight)
+			println(widthBox, heightBox, lengthBox, correctWeight, onlyWeight)
 		}
 
 		// значения не могут быть отрицаельными если это так то это ошибка
@@ -101,10 +101,8 @@ func Controller() {
 			checkScaleData, led := ParseData.CheckData(correctWeight, widthBox, heightBox, lengthBox, onlyWeight)
 
 			if led {
-				println("led1")
 				rulerPort.SendRulerCommand([]byte{0x66}, 0) // байт готовности, включает диод
 			} else {
-				println("led2")
 				rulerPort.SendRulerCommand([]byte{0x55}, 0) // байт готовности, выключает диод
 			}
 
