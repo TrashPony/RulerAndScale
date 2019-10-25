@@ -36,7 +36,10 @@ func (p *Port) SendRulerCommand(command []byte, countRead int) ([]byte, error) {
 
 	// запрос габаритов коробки
 	p.SendBytes(command, countRead, p.commandID)
-	data, _ := p.ReadBytes(countRead)
+	data, err := p.ReadBytes(countRead)
+	if err != nil {
+		return nil, err
+	}
 	if data != nil && len(data) > 0 && data[0] == p.commandID {
 		return data, nil
 	} else {

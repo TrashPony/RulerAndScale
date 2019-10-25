@@ -71,19 +71,15 @@ func Controller() {
 		if rulerPort != nil {
 			rulerResponse, err := rulerPort.SendRulerCommand([]byte{0x88}, 14)
 
-			if rulerResponse == nil && err.Error() != "wrong_data" {
+			if err != nil && err.Error() != "wrong_data" {
 
 				println("Линейка отвалилась")
 				TransportData.Ports.ResetPort("ruler")
 
 			} else {
-
-				if err != nil {
-					time.Sleep(1000 * time.Millisecond)
-					continue
+				if rulerResponse != nil {
+					widthBox, heightBox, lengthBox, onlyWeight = ParseData.ParseRulerData(rulerResponse, []byte{0x88})
 				}
-
-				widthBox, heightBox, lengthBox, onlyWeight = ParseData.ParseRulerData(rulerResponse, []byte{0x88})
 			}
 		}
 
@@ -92,9 +88,15 @@ func Controller() {
 		}
 
 		// значения не могут быть отрицаельными если это так то это ошибка
-		if correctWeight < 0 || widthBox < 0 || heightBox < 0 || lengthBox < 0 {
+		if correctWeight < 0 {
 			continue
 		}
+
+		//if !onlyWeight && correctWeight > 0 && (widthBox < 0 || heightBox < 0 || lengthBox < 0) {
+		//	// если на весах что то лежит а дальномеры тупят надо колибровать
+		//	rulerPort.SendRulerCommand([]byte{0x93}, 0)
+		//	continue
+		//}
 
 		if scalePort != nil && rulerPort != nil {
 
@@ -123,7 +125,7 @@ func Controller() {
 
 				Log.Write(correctWeight, widthBox, heightBox, lengthBox)
 
-				time.Sleep(time.Second * 3)
+				time.Sleep(time.Second * 2)
 			}
 		}
 	}

@@ -70,19 +70,25 @@ function DrawTop(data) {
 
     // рисуем левый датчик
     ctx.fillStyle = "rgb(0,255,0)";
-    if (data.indication.left < 0) ctx.fillStyle = "rgb(255,0,0)";
+    if (data.indication.left === 201 || data.indication.left < 0) ctx.fillStyle = "rgb(255,0,0)";
+    if (data.indication.left === 202) ctx.fillStyle = "rgb(0,2,255)";
+
     let left = {x: canvas.width / 2 - (data.ruler_option.width_max * (Scale / 2)) - 7, y: 17};
     ctx.fillRect(left.x, left.y, 7, 7);
 
     // рисуем правый датчик
     ctx.fillStyle = "rgb(0,255,0)";
-    if (data.indication.right < 0) ctx.fillStyle = "rgb(255,0,0)";
+    if (data.indication.right === 201 || data.indication.right < 0) ctx.fillStyle = "rgb(255,0,0)";
+    if (data.indication.right === 202) ctx.fillStyle = "rgb(0,2,255)";
+
     let right = {x: canvas.width / 2 + (data.ruler_option.width_max * (Scale / 2)), y: 20};
     ctx.fillRect(right.x, right.y, 7, 7);
 
     // рисуем нижний датчи
     ctx.fillStyle = "rgb(0,255,0)";
-    if (data.indication.back < 0) ctx.fillStyle = "rgb(255,0,0)";
+    if (data.indication.back === 201 || data.indication.back < 0) ctx.fillStyle = "rgb(255,0,0)";
+    if (data.indication.back === 202) ctx.fillStyle = "rgb(0,2,255)";
+
     let back = {x: canvas.width / 2 - 3.5, y: (data.ruler_option.length_max * (Scale / 2)) * 2 + 10};
     ctx.fillRect(back.x, back.y, 7, 7);
 
@@ -179,7 +185,9 @@ function DrawFront(data) {
 
     // рисуем левый датчик
     ctx.fillStyle = "rgb(0,255,0)";
-    if (data.indication.left < 0) ctx.fillStyle = "rgb(255,0,0)";
+    if (data.indication.left === 201 || data.indication.left < 0) ctx.fillStyle = "rgb(255,0,0)";
+    if (data.indication.left === 202) ctx.fillStyle = "rgb(0,2,255)";
+
     let left = {
         x: canvas.width / 2 - (data.ruler_option.width_max * (Scale / 2)) - 7,
         y: canvas.height + 7 - PlatformHeight * 2 * Scale
@@ -188,7 +196,9 @@ function DrawFront(data) {
 
     // рисуем правый датчик
     ctx.fillStyle = "rgb(0,255,0)";
-    if (data.indication.right < 0) ctx.fillStyle = "rgb(255,0,0)";
+    if (data.indication.right === 201 || data.indication.right < 0) ctx.fillStyle = "rgb(255,0,0)";
+    if (data.indication.right === 202) ctx.fillStyle = "rgb(0,2,255)";
+
     let right = {
         x: canvas.width / 2 + (data.ruler_option.width_max * (Scale / 2)),
         y: canvas.height + 10 - PlatformHeight * 2 * Scale
@@ -197,7 +207,9 @@ function DrawFront(data) {
 
     // рисуем верхний датчик
     ctx.fillStyle = "rgb(0,255,0)";
-    if (data.indication.top < 0) ctx.fillStyle = "rgb(255,0,0)";
+    if (data.indication.top === 201 || data.indication.top < 0) ctx.fillStyle = "rgb(255,0,0)";
+    if (data.indication.top === 202) ctx.fillStyle = "rgb(0,2,255)";
+
     let top = {
         x: canvas.width / 2 - 3.5,
         y: (canvas.height - PlatformHeight * Scale) - (data.ruler_option.top_max * (Scale / 2)) * 2 - 7

@@ -20,13 +20,14 @@ TroykaI2CHub splitter;
 
 // Диоды
 #define RED_LED_PIN  9
-#define GREEN_LED_PIN  5
+#define GREEN_LED_PIN  6
 
-int TOP_MAX    =      29;
-int WIDTH_MAX   =     20;
-int LENGTH_MAX   =    19;
+int TOP_MAX    =      93;
+int WIDTH_MAX   =     96;
+int LENGTH_MAX   =    55;
 
 boolean onlyWeight = false;
+boolean calibrate = true;
 
 int widthBox;
 int heightBox;
@@ -37,7 +38,7 @@ int left;
 int top;
 int back;
 
-boolean debug = false;
+boolean debug = false;                                                                                          ;
 
 Adafruit_VL53L0X lox = Adafruit_VL53L0X();
 
@@ -64,6 +65,13 @@ void setup()
 void loop()
 {
   if (digitalRead(BUTTON) == LOW) {
+
+    if (debug){
+        Serial.print("ONLYwEIGHT ");
+        Serial.print(" ");
+        Serial.println(byte(onlyWeight));
+    }
+
     if (onlyWeight) {
       onlyWeight = false;
       digitalWrite(RED_LED_PIN, HIGH);
@@ -73,7 +81,7 @@ void loop()
       digitalWrite(RED_LED_PIN, LOW);
       digitalWrite(GREEN_LED_PIN, HIGH);
     }
-    //delay(500);
+    delay(500);
   }
 
   Indication();
@@ -95,25 +103,32 @@ void loop()
       LENGTH_MAX = int(ID);
     }
 
+    if (incomingByte == 0x93) {
+      calibrate = true;
+    }
+
     if (incomingByte == 0x95) {
       byte buf[1] = {0x7F};
       Serial.write(buf, 1);
     }
 
+
+
     // запрос габаритов
     if (incomingByte == 0x88) {
-      byte buf[13] = {
+      byte buf[14] = {
         ID,
         0x2D, 0x0B, widthBox, 0x7B,
         0x2D, 0x16, heightBox, 0x7B,
-        0x2D, 0x21, lengthBox, 0x7B};
+        0x2D, 0x21, lengthBox, 0x7B,
+        byte(onlyWeight)};
 
       Serial.write(buf, sizeof(buf));
     }
 
     // взятие текущих настроек и показаний линейки
     if (incomingByte == 0x89) {
-      byte buf[41] = {
+      byte buf[42] = {
         ID,
         0x2D, 0x0B, left, 0x7B,
         0x2D, 0xBB, right, 0x7B,
@@ -124,7 +139,8 @@ void loop()
         0x2D, 0x21, LENGTH_MAX, 0x7B,
         0x2D, 0x0B, widthBox, 0x7B,
         0x2D, 0x16, heightBox, 0x7B,
-        0x2D, 0x21, lengthBox, 0x7B};
+        0x2D, 0x21, lengthBox, 0x7B,
+        byte(onlyWeight)};
 
       Serial.write(buf, sizeof(buf));
     }
@@ -146,13 +162,11 @@ void loop()
   }
 }
 
-int start = 0;
 int getDistance(int pin) {
   // pin - указываем номер сети для лазера откуда брать данные
   splitter.setBusChannel(pin);
-  delay(100);
 
-  if (0 == start%20 ) {
+  if (calibrate) {
     lox.begin();
   }
 
@@ -171,15 +185,18 @@ int getIndication() {
   float dist = round((measure.RangeMilliMeter)/10);
   int distInt = int(dist);
 
-  if (measure.RangeStatus != 4 && state == 0) {
+  if (state != 0) {
+    return 201; // датчик не подключен
+  }
+
+  if (measure.RangeStatus != 4 && distInt <= 200) {
     return distInt;
   } else {
-    return -1;
+    return 202; // датчик ушел за пределы измерения
   }
 }
 
 void Indication() {
-  start++;
 
   right = getDistance(RIGHT_PING_LAN);
   left = getDistance(LEFT_PING_LAN);
@@ -190,6 +207,7 @@ void Indication() {
   heightBox = TOP_MAX - top;
   lengthBox = LENGTH_MAX - back;
 
+  calibrate = false;
   if (debug) {
     Serial.print("Right_ping: ");
     Serial.print(right);

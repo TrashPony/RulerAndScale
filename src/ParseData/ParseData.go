@@ -135,31 +135,31 @@ func ParseRulerIndicationData(data []byte, command []byte) (left, right, top, ba
 		weight = true
 	}
 
-	if widthBox > 200 {
+	if widthBox > 202 {
 		widthBox = -1
 	}
 
-	if heightBox > 200 {
+	if heightBox > 202 {
 		heightBox = -1
 	}
 
-	if lengthBox > 200 {
+	if lengthBox > 202 {
 		lengthBox = -1
 	}
 
-	if left > 200 {
+	if left > 202 {
 		left = -1
 	}
 
-	if right > 200 {
+	if right > 202 {
 		right = -1
 	}
 
-	if top > 200 {
+	if top > 202 {
 		top = -1
 	}
 
-	if back > 200 {
+	if back > 202 {
 		back = -1
 	}
 
