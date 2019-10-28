@@ -59,11 +59,13 @@ func Controller() {
 
 				if err != nil && err.Error() == "wrong" {
 				} else {
-					correctWeight = int(ParseData.ParseScaleData(scaleResponse))
-					if correctWeight == 0 { // todo не уверен что это работает как надо :D
-						// иногда сериал порт посылает прошлые данные и от них надо избавится или смещает биты
-						scalePort.Reconnect(0)
-						scalePort.ReadBytes(5)
+					if scaleResponse != nil {
+						correctWeight = int(ParseData.ParseScaleData(scaleResponse))
+						if correctWeight == 0 { // todo не уверен что это работает как надо :D
+							// иногда сериал порт посылает прошлые данные и от них надо избавится или смещает биты
+							scalePort.Reconnect(0)
+							scalePort.ReadBytes(5)
+						}
 					}
 				}
 			}
@@ -106,9 +108,9 @@ func Controller() {
 			checkScaleData, led := ParseData.CheckData(correctWeight, widthBox, heightBox, lengthBox, onlyWeight)
 
 			if led {
-				rulerPort.SendRulerCommand([]byte{0x66}, 0) // байт готовности, включает диод
+				rulerPort.SendRulerCommand([]byte{0x66, 0x66}, 0) // байт готовности, включает диод
 			} else {
-				rulerPort.SendRulerCommand([]byte{0x55}, 0) // байт готовности, выключает диод
+				rulerPort.SendRulerCommand([]byte{0x55, 0x55}, 0) // байт готовности, выключает диод
 			}
 
 			if checkScaleData {
