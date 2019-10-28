@@ -49,7 +49,9 @@ void setup()
   pinMode(GREEN_LED_PIN, OUTPUT);
   pinMode(BUTTON, INPUT);
 
-  Serial.begin(115200);
+  Serial.begin(115200, SERIAL_8E1);
+  Serial.setTimeout(100);
+
   // ждем пока откроется сериал порт
   while(!Serial) {}
 
@@ -62,8 +64,14 @@ void setup()
   lox.begin();
 }
 
-void loop()
-{
+boolean start = false;
+
+void loop() {
+
+  if (start) {
+    Indication();
+  }
+
   if (digitalRead(BUTTON) == LOW) {
 
     if (debug){
@@ -81,55 +89,60 @@ void loop()
       digitalWrite(RED_LED_PIN, LOW);
       digitalWrite(GREEN_LED_PIN, HIGH);
     }
-    delay(500);
+    //delay(500);
   }
-
-  Indication();
 
   if (Serial.available()) {
 
-    byte incomingByte = Serial.read();
-    byte ID = Serial.read();
+    byte incomingBytes[2];
+    Serial.readBytes(incomingBytes, 2);
 
-    if (incomingByte == 0x90) {
-      TOP_MAX = int(ID);
+    if (incomingBytes[0] == 0x90) {
+      TOP_MAX = int(incomingBytes[1]);
+      return;
     }
 
-    if (incomingByte == 0x91) {
-      WIDTH_MAX = int(ID);
+    if (incomingBytes[0] == 0x91) {
+      WIDTH_MAX = int(incomingBytes[1]);
+      return;
     }
 
-    if (incomingByte == 0x92) {
-      LENGTH_MAX = int(ID);
+    if (incomingBytes[0] == 0x92) {
+      LENGTH_MAX = int(incomingBytes[1]);
+      return;
     }
 
-    if (incomingByte == 0x93) {
+    if (incomingBytes[0] == 0x93) {
       calibrate = true;
+      return;
     }
 
-    if (incomingByte == 0x95) {
+    if (incomingBytes[0] == 0x95) {
+      start = true;
       byte buf[1] = {0x7F};
       Serial.write(buf, 1);
+      return;
     }
 
-
-
     // запрос габаритов
-    if (incomingByte == 0x88) {
-      byte buf[14] = {
-        ID,
+    if (incomingBytes[0] == 0x88) {
+
+      byte ID = incomingBytes[1];
+
+      byte buf[13] = {
         0x2D, 0x0B, widthBox, 0x7B,
         0x2D, 0x16, heightBox, 0x7B,
         0x2D, 0x21, lengthBox, 0x7B,
         byte(onlyWeight)};
 
       Serial.write(buf, sizeof(buf));
+      return;
     }
 
     // взятие текущих настроек и показаний линейки
-    if (incomingByte == 0x89) {
-      byte buf[42] = {
-        ID,
+    if (incomingBytes[0] == 0x89) {
+
+      byte buf[41] = {
         0x2D, 0x0B, left, 0x7B,
         0x2D, 0xBB, right, 0x7B,
         0x2D, 0x16, top, 0x7B,
@@ -143,9 +156,10 @@ void loop()
         byte(onlyWeight)};
 
       Serial.write(buf, sizeof(buf));
+      return;
     }
 
-    if (incomingByte == 0x66) {
+    if (incomingBytes[0] == 0x66) {
       if (onlyWeight) {
         digitalWrite(GREEN_LED_PIN, HIGH);
         digitalWrite(RED_LED_PIN, LOW);
@@ -153,12 +167,18 @@ void loop()
         digitalWrite(RED_LED_PIN, HIGH);
         digitalWrite(GREEN_LED_PIN, LOW);
       }
+      return;
     }
 
-    if (incomingByte == 0x55) {
+    if (incomingBytes[0] == 0x55) {
       digitalWrite(RED_LED_PIN, LOW);
       digitalWrite(GREEN_LED_PIN, LOW);
+      return;
     }
+  }
+
+  while (Serial.available()) {
+    Serial.read();
   }
 }
 

@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"sync"
+	"time"
 )
 
 var UsersWs = make(map[*websocket.Conn]bool)
@@ -75,6 +76,8 @@ func Reader(ws *websocket.Conn) {
 		}
 
 		if msg.Event == "Debug" {
+
+			time.Sleep(400 * time.Millisecond)
 			rulerPort := TransportData.Ports.GetPort("ruler")
 			scalePort := TransportData.Ports.GetPort("scale")
 
@@ -82,7 +85,7 @@ func Reader(ws *websocket.Conn) {
 			var onlyWeight bool
 
 			if rulerPort != nil {
-				rulerResponse, err := rulerPort.SendRulerCommand([]byte{0x89}, 42)
+				rulerResponse, err := rulerPort.SendRulerCommand([]byte{0x89}, 41)
 				if err != nil && err.Error() != "wrong_data" {
 					TransportData.Ports.ResetPort("ruler")
 				} else {
@@ -94,7 +97,7 @@ func Reader(ws *websocket.Conn) {
 
 			if scalePort != nil {
 				scaleResponse, err := scalePort.SendScaleCommand()
-				if err != nil && err.Error() != "wrong" {
+				if err != nil && err.Error() != "wrong_data" {
 					TransportData.Ports.ResetPort("scale")
 				} else {
 					if (err != nil && err.Error() == "wrong") || scaleResponse == nil {
@@ -118,21 +121,26 @@ func Reader(ws *websocket.Conn) {
 				RulerPort:     rulerPort,
 				ScalePort:     scalePort,
 			}
+
+			continue
 		}
 
 		if msg.Event == "SetTop" {
 			rulerPort := TransportData.Ports.GetPort("ruler")
-			rulerPort.SendBytes([]byte{0x90, byte(msg.Count)}, 0, 0)
+			time.Sleep(500 * time.Millisecond)
+			rulerPort.SendRulerCommand([]byte{0x90, byte(msg.Count)}, 0)
 		}
 
 		if msg.Event == "SetWidth" {
 			rulerPort := TransportData.Ports.GetPort("ruler")
-			rulerPort.SendBytes([]byte{0x91, byte(msg.Count)}, 0, 0)
+			time.Sleep(500 * time.Millisecond)
+			rulerPort.SendRulerCommand([]byte{0x91, byte(msg.Count)}, 0)
 		}
 
 		if msg.Event == "SetLength" {
 			rulerPort := TransportData.Ports.GetPort("ruler")
-			rulerPort.SendBytes([]byte{0x92, byte(msg.Count)}, 0, 0)
+			time.Sleep(500 * time.Millisecond)
+			rulerPort.SendRulerCommand([]byte{0x92, byte(msg.Count)}, 0)
 		}
 
 		if msg.Event == "ResetRuler" {

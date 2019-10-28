@@ -81,6 +81,10 @@ func FindScale(portName string) *Port {
 		InterCharacterTimeout: 300,
 	}
 
+	if Ports.GetPort("ruler") != nil && portName == Ports.GetPort("ruler").Config.PortName {
+		return nil
+	}
+
 	connect, err := serial.Open(weightConfig)
 	if err != nil {
 		//println("serial.Open: %v", err.Error())
@@ -114,10 +118,15 @@ func FindRuler(portName string) *Port {
 	rulerConfig := serial.OpenOptions{
 		PortName:              portName,
 		BaudRate:              115200,
+		ParityMode:            serial.PARITY_EVEN,
 		DataBits:              8,
 		StopBits:              1,
 		MinimumReadSize:       0,
-		InterCharacterTimeout: 500,
+		InterCharacterTimeout: 400,
+	}
+
+	if Ports.GetPort("scale") != nil && portName == Ports.GetPort("scale").Config.PortName {
+		return nil
 	}
 
 	connect, err := serial.Open(rulerConfig)
@@ -126,12 +135,14 @@ func FindRuler(portName string) *Port {
 		return nil
 	}
 
-	_, err = connect.Write([]byte{0x95})
+	_, err = connect.Write([]byte{0x95, 0x95})
 	if err != nil {
 		connect.Close()
 		return nil
 	}
 
+	time.Sleep(400 * time.Millisecond)
+	println(portName)
 	buf := make([]byte, 1)
 	_, err = connect.Read(buf)
 

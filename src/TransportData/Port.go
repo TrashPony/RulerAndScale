@@ -11,7 +11,6 @@ type Port struct {
 	Name       string
 	Config     *serial.OpenOptions
 	Connection io.ReadWriteCloser
-	commandID  byte
 	mx         sync.Mutex
 }
 
@@ -33,18 +32,15 @@ func (p *Port) Reconnect(countRead int) error {
 	return nil
 }
 
-func (p *Port) SendBytes(command []byte, countRead int, id byte) {
-
-	if id > 0 {
-		command = append(command, id)
-	}
+func (p *Port) SendBytes(command []byte, countRead int) error {
 
 	_, err := p.Connection.Write(command)
 	if err != nil {
 		println("ошибка записи" + err.Error())
+		return err
 	}
 
-	return
+	return nil
 }
 
 func (p *Port) ReadBytes(countRead int) ([]byte, error) {
@@ -59,6 +55,6 @@ func (p *Port) ReadBytes(countRead int) ([]byte, error) {
 	if n == countRead {
 		return data, nil
 	} else {
-		return nil, errors.New("wrong")
+		return nil, errors.New("wrong_data")
 	}
 }

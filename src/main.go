@@ -7,6 +7,7 @@ import (
 	"github.com/TrashPony/RulerAndScale/TransportData"
 	"github.com/TrashPony/RulerAndScale/websocket"
 	"github.com/gorilla/mux"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
@@ -34,12 +35,13 @@ func main() {
 func Controller() {
 
 	for {
-
 		if len(websocket.UsersWs) > 0 {
 			println("происходит дебаг :D")
 			time.Sleep(1000 * time.Millisecond)
 			continue
 		}
+
+		time.Sleep(250 * time.Millisecond)
 
 		correctWeight := -1
 		widthBox, heightBox, lengthBox := -1, -1, -1
@@ -48,7 +50,7 @@ func Controller() {
 		scalePort := TransportData.Ports.GetPort("scale")
 		if scalePort != nil {
 			scaleResponse, err := scalePort.SendScaleCommand()
-			if scaleResponse == nil && err.Error() != "wrong" {
+			if scaleResponse == nil && err.Error() != "wrong_data" {
 
 				println("Весы отвалились")
 				TransportData.Ports.ResetPort("scale")
@@ -69,7 +71,7 @@ func Controller() {
 
 		rulerPort := TransportData.Ports.GetPort("ruler")
 		if rulerPort != nil {
-			rulerResponse, err := rulerPort.SendRulerCommand([]byte{0x88}, 14)
+			rulerResponse, err := rulerPort.SendRulerCommand([]byte{0x88}, 13)
 
 			if err != nil && err.Error() != "wrong_data" {
 
@@ -78,12 +80,12 @@ func Controller() {
 
 			} else {
 				if rulerResponse != nil {
-					widthBox, heightBox, lengthBox, onlyWeight = ParseData.ParseRulerData(rulerResponse, []byte{0x88})
+					widthBox, heightBox, lengthBox, onlyWeight = ParseData.ParseRulerData(rulerResponse, []byte{0x89})
 				}
 			}
 		}
 
-		if widthBox > 0 || heightBox > 0 || lengthBox > 0 || correctWeight > 0 {
+		if widthBox >= 0 || heightBox >= 0 || lengthBox >= 0 || correctWeight >= 0 {
 			println(widthBox, heightBox, lengthBox, correctWeight, onlyWeight)
 		}
 
@@ -92,11 +94,12 @@ func Controller() {
 			continue
 		}
 
-		//if !onlyWeight && correctWeight > 0 && (widthBox < 0 || heightBox < 0 || lengthBox < 0) {
-		//	// если на весах что то лежит а дальномеры тупят надо колибровать
-		//	rulerPort.SendRulerCommand([]byte{0x93}, 0)
-		//	continue
-		//}
+		if rulerPort != nil && !onlyWeight && correctWeight > 0 && (widthBox < 0 || heightBox < 0 || lengthBox < 0) {
+			// если на весах что то лежит а дальномеры тупят надо колибровать
+			rulerPort.SendRulerCommand([]byte{0x93}, 0)
+			ioutil.ReadAll(rulerPort.Connection)
+			continue
+		}
 
 		if scalePort != nil && rulerPort != nil {
 

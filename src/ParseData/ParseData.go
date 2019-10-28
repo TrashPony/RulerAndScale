@@ -87,11 +87,11 @@ func ParseRulerData(data []byte, command []byte) (widthBox, heightBox, lengthBox
 	*/
 
 	if command != nil && (command[0] == 0x88 || command[0] == 0x89) {
-		widthBox = rulerParse([]byte{data[1], data[2], data[3], data[4]}, 0x0B)     //ширина
-		heightBox = rulerParse([]byte{data[5], data[6], data[7], data[8]}, 0x16)    //высота
-		lengthBox = rulerParse([]byte{data[9], data[10], data[11], data[12]}, 0x21) //длина
+		widthBox = rulerParse([]byte{data[0], data[1], data[2], data[3]}, 0x0B)    //ширина
+		heightBox = rulerParse([]byte{data[4], data[5], data[6], data[7]}, 0x16)   //высота
+		lengthBox = rulerParse([]byte{data[8], data[9], data[10], data[11]}, 0x21) //длина
 
-		if data[13] == 0 {
+		if data[12] == 0 {
 			weight = false
 		} else {
 			weight = true
@@ -116,20 +116,20 @@ func ParseRulerData(data []byte, command []byte) (widthBox, heightBox, lengthBox
 func ParseRulerIndicationData(data []byte, command []byte) (left, right, top, back, wMax, tMax, lMax, widthBox, heightBox, lengthBox int, weight bool) {
 	// TODO это была не лучшая моя идея :D
 
-	left = rulerParse([]byte{data[1], data[2], data[3], data[4]}, 0x0B)
-	right = rulerParse([]byte{data[5], data[6], data[7], data[8]}, 0xBB)
-	top = rulerParse([]byte{data[9], data[10], data[11], data[12]}, 0x16)
-	back = rulerParse([]byte{data[13], data[14], data[15], data[16]}, 0x21)
+	left = rulerParse([]byte{data[0], data[1], data[2], data[3]}, 0x0B)
+	right = rulerParse([]byte{data[4], data[5], data[6], data[7]}, 0xBB)
+	top = rulerParse([]byte{data[8], data[9], data[10], data[11]}, 0x16)
+	back = rulerParse([]byte{data[12], data[13], data[14], data[15]}, 0x21)
 
-	wMax = rulerParse([]byte{data[17], data[18], data[19], data[20]}, 0x0B) //ширина max
-	tMax = rulerParse([]byte{data[21], data[22], data[23], data[24]}, 0x16) //высота max
-	lMax = rulerParse([]byte{data[25], data[26], data[27], data[28]}, 0x21) //длина max
+	wMax = rulerParse([]byte{data[16], data[17], data[18], data[19]}, 0x0B) //ширина max
+	tMax = rulerParse([]byte{data[20], data[21], data[22], data[23]}, 0x16) //высота max
+	lMax = rulerParse([]byte{data[24], data[25], data[26], data[27]}, 0x21) //длина max
 
-	widthBox = rulerParse([]byte{data[29], data[30], data[31], data[32]}, 0x0B)  //ширина
-	heightBox = rulerParse([]byte{data[33], data[34], data[35], data[36]}, 0x16) //высота
-	lengthBox = rulerParse([]byte{data[37], data[38], data[39], data[40]}, 0x21) //длина
+	widthBox = rulerParse([]byte{data[28], data[29], data[30], data[31]}, 0x0B)  //ширина
+	heightBox = rulerParse([]byte{data[32], data[33], data[34], data[35]}, 0x16) //высота
+	lengthBox = rulerParse([]byte{data[36], data[37], data[38], data[39]}, 0x21) //длина
 
-	if data[41] == 0 {
+	if data[40] == 0 {
 		weight = false
 	} else {
 		weight = true
