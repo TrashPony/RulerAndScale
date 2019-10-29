@@ -7,6 +7,7 @@ import (
 	"github.com/TrashPony/RulerAndScale/TransportData"
 	"github.com/TrashPony/RulerAndScale/websocket"
 	"github.com/gorilla/mux"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
@@ -33,15 +34,23 @@ func main() {
 
 func Controller() {
 
+	debug := false
 	for {
 
 		scalePort := TransportData.Ports.GetPort("scale")
 		rulerPort := TransportData.Ports.GetPort("ruler")
 
 		if len(websocket.UsersWs) > 0 {
+			debug = true
 			println("происходит дебаг :D")
 			time.Sleep(1000 * time.Millisecond)
 			continue
+		}
+
+		if debug {
+			debug = false
+			// очищаем буфер от сообщений отладки
+			ioutil.ReadAll(rulerPort.Connection)
 		}
 
 		time.Sleep(250 * time.Millisecond)
@@ -109,11 +118,6 @@ func Controller() {
 			rulerPort.SendRulerCommand([]byte{0x93}, 0)
 			continue
 		}
-
-		InputData.PrintResult(":" + strconv.Itoa(correctWeight) +
-			":" + strconv.Itoa(widthBox) +
-			":" + strconv.Itoa(heightBox) +
-			":" + strconv.Itoa(lengthBox))
 
 		if scalePort != nil && rulerPort != nil {
 
