@@ -110,6 +110,11 @@ func Controller() {
 			continue
 		}
 
+		InputData.PrintResult(":" + strconv.Itoa(correctWeight) +
+			":" + strconv.Itoa(widthBox) +
+			":" + strconv.Itoa(heightBox) +
+			":" + strconv.Itoa(lengthBox))
+
 		if scalePort != nil && rulerPort != nil {
 
 			checkScaleData, _ := ParseData.CheckData(correctWeight, widthBox, heightBox, lengthBox, onlyWeight)
