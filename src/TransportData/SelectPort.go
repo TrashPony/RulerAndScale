@@ -131,7 +131,7 @@ func FindRuler(portName string) *Port {
 
 	connect, err := serial.Open(rulerConfig)
 	if err != nil {
-		println("serial.Open: %v", err.Error())
+		//println("serial.Open: %v", err.Error())
 		return nil
 	}
 

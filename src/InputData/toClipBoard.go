@@ -5,13 +5,21 @@ import (
 	"github.com/micmonay/keybd_event"
 	"log"
 	"runtime"
+	"sync"
 	"time"
 )
 
-func ToClipBoard(data string) {
+func PrintResult(data string) {
+	keyMX.Lock()
+	defer keyMX.Unlock()
 
 	println(data)
 
+	toClipBoard(data)
+	toClipBoard("_ESC_Save")
+}
+
+func toClipBoard(data string) {
 	err := clipboard.WriteAll(data)
 
 	if err != nil {
@@ -19,49 +27,45 @@ func ToClipBoard(data string) {
 	}
 
 	pressCtrlV()
-	pressEnter()
-	time.Sleep(time.Millisecond * 400)
+	time.Sleep(time.Millisecond * 1000)
+}
+
+var kb = initKeyBD()
+var keyMX sync.Mutex
+
+func initKeyBD() keybd_event.KeyBonding {
+	kb, err := keybd_event.NewKeyBonding()
+	if err != nil {
+		panic(err)
+	}
+
+	// For linux, it is very important wait 2 seconds
+	if runtime.GOOS == "linux" {
+		time.Sleep(2000 * time.Millisecond)
+	}
+
+	return kb
 }
 
 func pressCtrlV() {
-	kb, err := keybd_event.NewKeyBonding()
-	if err != nil {
-		panic(err)
-	}
+	kb.Clear()
 
-	// For linux, it is very important wait 2 seconds
-	if runtime.GOOS == "linux" {
-		time.Sleep(200 * time.Millisecond)
-	}
-
-	//set keys
+	// CTRL-V
 	kb.SetKeys(keybd_event.VK_V)
 	kb.HasCTRL(true)
-
-	//launch
-	err = kb.Launching()
-	if err != nil {
-		panic(err)
-	}
-}
-
-func pressEnter() {
-	kb, err := keybd_event.NewKeyBonding()
+	err := kb.Launching()
 	if err != nil {
 		panic(err)
 	}
 
-	// For linux, it is very important wait 2 seconds
-	if runtime.GOOS == "linux" {
-		time.Sleep(200 * time.Millisecond)
-	}
+	kb.Clear()
 
-	//set keys
+	//Enter
 	kb.SetKeys(keybd_event.VK_ENTER)
-
-	//launch
 	err = kb.Launching()
 	if err != nil {
 		panic(err)
 	}
+
+	kb.Clear()
 }

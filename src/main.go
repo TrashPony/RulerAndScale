@@ -104,34 +104,36 @@ func Controller() {
 			continue
 		}
 
+		// какойто лазер возможно не откалиброван или находится за пределами измерения
+		if widthBox == 202 || heightBox == 202 || lengthBox == 202 {
+			rulerPort.SendRulerCommand([]byte{0x93}, 0)
+			continue
+		}
+
 		if scalePort != nil && rulerPort != nil {
 
 			checkScaleData, _ := ParseData.CheckData(correctWeight, widthBox, heightBox, lengthBox, onlyWeight)
 
 			if checkScaleData {
 				rulerPort.SendRulerCommand([]byte{0x66, 0x66}, 0) // байт готовности, включает диод
-			} else {
-				//rulerPort.SendRulerCommand([]byte{0x55, 0x55}, 0) // байт готовности, выключает диод
 			}
 
 			if checkScaleData {
 
 				if onlyWeight {
 
-					InputData.ToClipBoard(strconv.Itoa(correctWeight))
+					InputData.PrintResult(strconv.Itoa(correctWeight))
 
 				} else {
-					InputData.ToClipBoard(":" + strconv.Itoa(correctWeight) +
+					InputData.PrintResult(":" + strconv.Itoa(correctWeight) +
 						":" + strconv.Itoa(widthBox) +
 						":" + strconv.Itoa(heightBox) +
 						":" + strconv.Itoa(lengthBox))
 				}
 
-				InputData.ToClipBoard("_ESC_Save")
-
 				Log.Write(correctWeight, widthBox, heightBox, lengthBox)
 
-				time.Sleep(time.Second)
+				time.Sleep(time.Second * 2)
 				rulerPort.SendRulerCommand([]byte{0x55, 0x55}, 0)
 			}
 		}
