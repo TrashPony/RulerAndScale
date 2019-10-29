@@ -7,7 +7,6 @@ import (
 	"github.com/TrashPony/RulerAndScale/TransportData"
 	"github.com/TrashPony/RulerAndScale/websocket"
 	"github.com/gorilla/mux"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
@@ -35,6 +34,10 @@ func main() {
 func Controller() {
 
 	for {
+
+		scalePort := TransportData.Ports.GetPort("scale")
+		rulerPort := TransportData.Ports.GetPort("ruler")
+
 		if len(websocket.UsersWs) > 0 {
 			println("происходит дебаг :D")
 			time.Sleep(1000 * time.Millisecond)
@@ -47,7 +50,6 @@ func Controller() {
 		widthBox, heightBox, lengthBox := -1, -1, -1
 		onlyWeight := false
 
-		scalePort := TransportData.Ports.GetPort("scale")
 		if scalePort != nil {
 			scaleResponse, err := scalePort.SendScaleCommand()
 			if scaleResponse == nil && err.Error() != "wrong_data" {
@@ -71,7 +73,6 @@ func Controller() {
 			}
 		}
 
-		rulerPort := TransportData.Ports.GetPort("ruler")
 		if rulerPort != nil {
 			rulerResponse, err := rulerPort.SendRulerCommand([]byte{0x88}, 13)
 
@@ -98,19 +99,19 @@ func Controller() {
 
 		if rulerPort != nil && !onlyWeight && correctWeight > 0 && (widthBox < 0 || heightBox < 0 || lengthBox < 0) {
 			// если на весах что то лежит а дальномеры тупят надо колибровать
-			rulerPort.SendRulerCommand([]byte{0x93}, 0)
-			ioutil.ReadAll(rulerPort.Connection)
+			// rulerPort.SendRulerCommand([]byte{0x93}, 0)
+			// ioutil.ReadAll(rulerPort.Connection)
 			continue
 		}
 
 		if scalePort != nil && rulerPort != nil {
 
-			checkScaleData, led := ParseData.CheckData(correctWeight, widthBox, heightBox, lengthBox, onlyWeight)
+			checkScaleData, _ := ParseData.CheckData(correctWeight, widthBox, heightBox, lengthBox, onlyWeight)
 
-			if led {
+			if checkScaleData {
 				rulerPort.SendRulerCommand([]byte{0x66, 0x66}, 0) // байт готовности, включает диод
 			} else {
-				rulerPort.SendRulerCommand([]byte{0x55, 0x55}, 0) // байт готовности, выключает диод
+				//rulerPort.SendRulerCommand([]byte{0x55, 0x55}, 0) // байт готовности, выключает диод
 			}
 
 			if checkScaleData {
@@ -130,7 +131,8 @@ func Controller() {
 
 				Log.Write(correctWeight, widthBox, heightBox, lengthBox)
 
-				time.Sleep(time.Second * 2)
+				time.Sleep(time.Second)
+				rulerPort.SendRulerCommand([]byte{0x55, 0x55}, 0)
 			}
 		}
 	}

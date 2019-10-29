@@ -59,12 +59,12 @@ func SelectPort() {
 
 				portName := nameClass + strconv.Itoa(i)
 
-				if Ports.GetPort("scale") == nil {
-					Ports.SetPort(FindScale(portName), "scale")
-				}
-
 				if Ports.GetPort("ruler") == nil {
 					Ports.SetPort(FindRuler(portName), "ruler")
+				}
+
+				if Ports.GetPort("scale") == nil {
+					Ports.SetPort(FindScale(portName), "scale")
 				}
 			}
 		}
@@ -122,7 +122,7 @@ func FindRuler(portName string) *Port {
 		DataBits:              8,
 		StopBits:              1,
 		MinimumReadSize:       0,
-		InterCharacterTimeout: 400,
+		InterCharacterTimeout: 600,
 	}
 
 	if Ports.GetPort("scale") != nil && portName == Ports.GetPort("scale").Config.PortName {
@@ -131,7 +131,7 @@ func FindRuler(portName string) *Port {
 
 	connect, err := serial.Open(rulerConfig)
 	if err != nil {
-		//println("serial.Open: %v", err.Error())
+		println("serial.Open: %v", err.Error())
 		return nil
 	}
 
@@ -143,7 +143,7 @@ func FindRuler(portName string) *Port {
 
 	time.Sleep(400 * time.Millisecond)
 	println(portName)
-	buf := make([]byte, 1)
+	buf := make([]byte, 999)
 	_, err = connect.Read(buf)
 
 	if err != nil {
