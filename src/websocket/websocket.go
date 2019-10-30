@@ -1,8 +1,8 @@
 package websocket
 
 import (
-	"github.com/TrashPony/RulerAndScale/ParseData"
-	"github.com/TrashPony/RulerAndScale/TransportData"
+	"github.com/TrashPony/RulerAndScale/parse_data"
+	"github.com/TrashPony/RulerAndScale/transport_data"
 	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
@@ -15,13 +15,13 @@ var sendPipe = make(chan Message)
 var mutex = &sync.Mutex{}
 
 type Message struct {
-	Event         string              `json:"event"`
-	ScalePlatform ScalePlatform       `json:"scale_platform"`
-	RulerOption   RulerOption         `json:"ruler_option"`
-	Indication    Indication          `json:"indication"`
-	Count         int                 `json:"count"`
-	ScalePort     *TransportData.Port `json:"scale_port"`
-	RulerPort     *TransportData.Port `json:"ruler_port"`
+	Event         string               `json:"event"`
+	ScalePlatform ScalePlatform        `json:"scale_platform"`
+	RulerOption   RulerOption          `json:"ruler_option"`
+	Indication    Indication           `json:"indication"`
+	Count         int                  `json:"count"`
+	ScalePort     *transport_data.Port `json:"scale_port"`
+	RulerPort     *transport_data.Port `json:"ruler_port"`
 }
 
 type ScalePlatform struct {
@@ -63,7 +63,7 @@ func HandleConnections(w http.ResponseWriter, r *http.Request) {
 
 func Reader(ws *websocket.Conn) {
 
-	//TODO если разная платформа весов)
+	//TODO есть разная платформа весов)
 	scalePlatform := ScalePlatform{Length: 50, Width: 40}
 
 	for {
@@ -78,37 +78,37 @@ func Reader(ws *websocket.Conn) {
 		if msg.Event == "Debug" {
 
 			time.Sleep(400 * time.Millisecond)
-			rulerPort := TransportData.Ports.GetPort("ruler")
-			scalePort := TransportData.Ports.GetPort("scale")
+			rulerPort := transport_data.Ports.GetPort("ruler")
+			scalePort := transport_data.Ports.GetPort("scale")
 
 			var left, right, top, back, widthMax, heightMax, lengthMax, width, height, length, correctWeight int
 			var onlyWeight bool
 
 			if rulerPort != nil {
-				rulerResponse, err := rulerPort.SendRulerCommand([]byte{0x89}, 41)
+				rulerResponse, err := rulerPort.SendRulerCommand([]byte{0x89, 0x89}, 41)
+
 				if err != nil && err.Error() != "wrong_data" {
-					TransportData.Ports.ResetPort("ruler")
+
+					println("Линейка отвалилась")
+					transport_data.Ports.ResetPort("ruler")
+
 				} else {
 					if rulerResponse != nil {
-						left, right, top, back, widthMax, heightMax, lengthMax, width, height, length, onlyWeight = ParseData.ParseRulerIndicationData(rulerResponse, []byte{0x89})
+						left, right, top, back, widthMax, heightMax, lengthMax, width, height, length, onlyWeight = parse_data.ParseRulerIndicationData(rulerResponse)
 					}
 				}
 			}
 
 			if scalePort != nil {
 				scaleResponse, err := scalePort.SendScaleCommand()
-				if err != nil && err.Error() != "wrong_data" {
-					TransportData.Ports.ResetPort("scale")
+				if scaleResponse == nil && err.Error() != "wrong_data" {
+
+					println("Весы отвалились")
+					transport_data.Ports.ResetPort("scale")
+
 				} else {
-					if (err != nil && err.Error() == "wrong") || scaleResponse == nil {
-						correctWeight = -1
-					} else {
-						correctWeight = int(ParseData.ParseScaleData(scaleResponse))
-						if correctWeight == 0 {
-							// иногда сериал порт посылает прошлые данные и от них надо избавится или смещает биты
-							scalePort.Reconnect(0)
-							scalePort.ReadBytes(5)
-						}
+					if scaleResponse != nil {
+						correctWeight = int(parse_data.ParseScaleData(scaleResponse))
 					}
 				}
 			}
@@ -126,29 +126,29 @@ func Reader(ws *websocket.Conn) {
 		}
 
 		if msg.Event == "SetTop" {
-			rulerPort := TransportData.Ports.GetPort("ruler")
+			rulerPort := transport_data.Ports.GetPort("ruler")
 			time.Sleep(500 * time.Millisecond)
 			rulerPort.SendRulerCommand([]byte{0x90, byte(msg.Count)}, 0)
 		}
 
 		if msg.Event == "SetWidth" {
-			rulerPort := TransportData.Ports.GetPort("ruler")
+			rulerPort := transport_data.Ports.GetPort("ruler")
 			time.Sleep(500 * time.Millisecond)
 			rulerPort.SendRulerCommand([]byte{0x91, byte(msg.Count)}, 0)
 		}
 
 		if msg.Event == "SetLength" {
-			rulerPort := TransportData.Ports.GetPort("ruler")
+			rulerPort := transport_data.Ports.GetPort("ruler")
 			time.Sleep(500 * time.Millisecond)
 			rulerPort.SendRulerCommand([]byte{0x92, byte(msg.Count)}, 0)
 		}
 
 		if msg.Event == "ResetRuler" {
-			TransportData.Ports.ResetPort("ruler")
+			transport_data.Ports.ResetPort("ruler")
 		}
 
 		if msg.Event == "ResetScale" {
-			TransportData.Ports.ResetPort("scale")
+			transport_data.Ports.ResetPort("scale")
 		}
 	}
 }

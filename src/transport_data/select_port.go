@@ -1,4 +1,4 @@
-package TransportData
+package transport_data
 
 import (
 	"github.com/jacobsa/go-serial/serial"
@@ -48,6 +48,7 @@ func (p *PortStorage) SetPort(port *Port, device string) {
 
 func SelectPort() {
 
+	// горутина следит за тем что бы были найдены все йстройства
 	println("Поиск портов")
 	portClass := []string{"/dev/ttyS", "/dev/ttyACM", "/dev/ttyUSB"}
 
@@ -81,6 +82,7 @@ func FindScale(portName string) *Port {
 		InterCharacterTimeout: 300,
 	}
 
+	// игнорируем если этот порт уже принадлежит другому устройству
 	if Ports.GetPort("ruler") != nil && portName == Ports.GetPort("ruler").Config.PortName {
 		return nil
 	}
@@ -121,10 +123,10 @@ func FindRuler(portName string) *Port {
 		ParityMode:            serial.PARITY_EVEN,
 		DataBits:              8,
 		StopBits:              1,
-		MinimumReadSize:       0,
 		InterCharacterTimeout: 600,
 	}
 
+	// игнорируем если этот порт уже принадлежит другому устройству
 	if Ports.GetPort("scale") != nil && portName == Ports.GetPort("scale").Config.PortName {
 		return nil
 	}
@@ -141,8 +143,6 @@ func FindRuler(portName string) *Port {
 		return nil
 	}
 
-	time.Sleep(400 * time.Millisecond)
-	println(portName)
 	buf := make([]byte, 999)
 	_, err = connect.Read(buf)
 

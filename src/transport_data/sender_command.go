@@ -1,4 +1,4 @@
-package TransportData
+package transport_data
 
 import (
 	"errors"
@@ -8,12 +8,11 @@ func (p *Port) SendScaleCommand() ([]byte, error) {
 
 	countRead := 5
 
-	err := p.Reconnect(0)
+	err := p.SendBytes([]byte{0x4A}, countRead)
 	if err != nil {
 		return nil, err
 	}
 
-	p.SendBytes([]byte{0x4A}, countRead)
 	data, err := p.ReadBytes(countRead)
 	if err != nil {
 		return nil, err
@@ -23,16 +22,6 @@ func (p *Port) SendScaleCommand() ([]byte, error) {
 }
 
 func (p *Port) SendRulerCommand(command []byte, countRead int) ([]byte, error) {
-	//
-	//if p.commandID > 200 {
-	//	p.commandID = 1
-	//}
-	//p.commandID++
-	//
-	//err := p.Reconnect(0)
-	//if err != nil {
-	//	return nil, err
-	//}
 
 	// запрос габаритов коробки
 	err := p.SendBytes(command, countRead)

@@ -1,4 +1,4 @@
-package ParseData
+package parse_data
 
 var OldWeightValue = 0
 var faultWeight = 40

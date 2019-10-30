@@ -1,10 +1,10 @@
 package main
 
 import (
-	"github.com/TrashPony/RulerAndScale/InputData"
-	"github.com/TrashPony/RulerAndScale/Log"
-	"github.com/TrashPony/RulerAndScale/ParseData"
-	"github.com/TrashPony/RulerAndScale/TransportData"
+	log2 "github.com/TrashPony/RulerAndScale/log"
+	"github.com/TrashPony/RulerAndScale/output_data"
+	"github.com/TrashPony/RulerAndScale/parse_data"
+	"github.com/TrashPony/RulerAndScale/transport_data"
 	"github.com/TrashPony/RulerAndScale/websocket"
 	"github.com/gorilla/mux"
 	"io/ioutil"
@@ -15,17 +15,15 @@ import (
 )
 
 func main() {
-	go TransportData.SelectPort()
+	go transport_data.SelectPort()
 	go Controller()
 
+	// вебсервер для страницы состояния системы провески
 	router := mux.NewRouter()
-
 	router.HandleFunc("/ws", websocket.HandleConnections)
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("../static/")))
 
 	go websocket.Sender()
-
-	log.Println("http server started on :8080")
 	err := http.ListenAndServe(":8080", router)
 	if err != nil {
 		log.Panic(err)
@@ -33,27 +31,36 @@ func main() {
 }
 
 func Controller() {
-
 	debug := false
+
 	for {
 
-		scalePort := TransportData.Ports.GetPort("scale")
-		rulerPort := TransportData.Ports.GetPort("ruler")
+		scalePort := transport_data.Ports.GetPort("scale")
+		rulerPort := transport_data.Ports.GetPort("ruler")
 
+		// если на странице состояния наъходится кто либо то дабы избежать
+		// конкуретного доступа к стройствам ждем пока страницу закроют
 		if len(websocket.UsersWs) > 0 {
 			debug = true
-			println("происходит дебаг :D")
 			time.Sleep(1000 * time.Millisecond)
 			continue
 		}
 
+		// без этой задерржки ардуино не будет успевать отвечать
+		time.Sleep(250 * time.Millisecond)
+
+		// очищаем буфер от сообщений отладки,
+		// т.к. там у сообщения больше байт
+		// все не считаные байты сделают сдвиг в будущих сообщения линейки
 		if debug {
 			debug = false
-			// очищаем буфер от сообщений отладки
-			ioutil.ReadAll(rulerPort.Connection)
+			if scalePort != nil {
+				ioutil.ReadAll(scalePort.Connection)
+			}
+			if rulerPort != nil {
+				ioutil.ReadAll(rulerPort.Connection)
+			}
 		}
-
-		time.Sleep(250 * time.Millisecond)
 
 		correctWeight := -1
 		widthBox, heightBox, lengthBox := -1, -1, -1
@@ -64,87 +71,77 @@ func Controller() {
 			if scaleResponse == nil && err.Error() != "wrong_data" {
 
 				println("Весы отвалились")
-				TransportData.Ports.ResetPort("scale")
+				transport_data.Ports.ResetPort("scale")
 
 			} else {
-
-				if err != nil && err.Error() == "wrong" {
-				} else {
-					if scaleResponse != nil {
-						correctWeight = int(ParseData.ParseScaleData(scaleResponse))
-						if correctWeight == 0 { // todo не уверен что это работает как надо :D
-							// иногда сериал порт посылает прошлые данные и от них надо избавится или смещает биты
-							scalePort.Reconnect(0)
-							scalePort.ReadBytes(5)
-						}
-					}
+				if scaleResponse != nil {
+					correctWeight = int(parse_data.ParseScaleData(scaleResponse))
 				}
 			}
 		}
 
 		if rulerPort != nil {
-			rulerResponse, err := rulerPort.SendRulerCommand([]byte{0x88}, 13)
+			rulerResponse, err := rulerPort.SendRulerCommand([]byte{0x88, 0x88}, 13)
 
 			if err != nil && err.Error() != "wrong_data" {
 
 				println("Линейка отвалилась")
-				TransportData.Ports.ResetPort("ruler")
+				transport_data.Ports.ResetPort("ruler")
 
 			} else {
 				if rulerResponse != nil {
-					widthBox, heightBox, lengthBox, onlyWeight = ParseData.ParseRulerData(rulerResponse, []byte{0x89})
+					widthBox, heightBox, lengthBox, onlyWeight = parse_data.ParseRulerData(rulerResponse)
 				}
 			}
 		}
 
+		// прост)
 		if widthBox >= 0 || heightBox >= 0 || lengthBox >= 0 || correctWeight >= 0 {
 			println(widthBox, heightBox, lengthBox, correctWeight, onlyWeight)
 		}
 
-		// значения не могут быть отрицаельными если это так то это ошибка
-		if correctWeight < 0 {
+		// весы не подключены, авто забитие не происходит
+		if correctWeight < 0 || scalePort == nil {
 			continue
 		}
 
+		// если нам нужна линейка а она тупит про пропускаем
 		if rulerPort != nil && !onlyWeight && correctWeight > 0 && (widthBox < 0 || heightBox < 0 || lengthBox < 0) {
-			// если на весах что то лежит а дальномеры тупят надо колибровать
-			// rulerPort.SendRulerCommand([]byte{0x93}, 0)
-			// ioutil.ReadAll(rulerPort.Connection)
 			continue
 		}
 
 		// какойто лазер возможно не откалиброван или находится за пределами измерения
-		if widthBox == 202 || heightBox == 202 || lengthBox == 202 {
-			rulerPort.SendRulerCommand([]byte{0x93}, 0)
+		if !onlyWeight && (widthBox == 202 || heightBox == 202 || lengthBox == 202) {
+			// отсылаем команду калибровки
+			rulerPort.SendRulerCommand([]byte{0x93, 0x93}, 0)
 			continue
 		}
 
-		if scalePort != nil && rulerPort != nil {
+		// проверяем надо ли забивать данные или нет
+		checkScaleData, _ := parse_data.CheckData(correctWeight, widthBox, heightBox, lengthBox, onlyWeight)
 
-			checkScaleData, _ := ParseData.CheckData(correctWeight, widthBox, heightBox, lengthBox, onlyWeight)
+		if checkScaleData {
 
-			if checkScaleData {
-				rulerPort.SendRulerCommand([]byte{0x66, 0x66}, 0) // байт готовности, включает диод
+			// включает диод на дуине
+			rulerPort.SendRulerCommand([]byte{0x66, 0x66}, 0)
+
+			// записываем данные в место курсора)
+			if onlyWeight {
+				output_data.PrintResult(strconv.Itoa(correctWeight))
+			} else {
+				output_data.PrintResult(":" + strconv.Itoa(correctWeight) +
+					":" + strconv.Itoa(widthBox) +
+					":" + strconv.Itoa(heightBox) +
+					":" + strconv.Itoa(lengthBox))
 			}
 
-			if checkScaleData {
+			log2.Write(correctWeight, widthBox, heightBox, lengthBox)
 
-				if onlyWeight {
+			// время ожидания после успешного взвешивания
+			time.Sleep(time.Second * 2)
 
-					InputData.PrintResult(strconv.Itoa(correctWeight))
-
-				} else {
-					InputData.PrintResult(":" + strconv.Itoa(correctWeight) +
-						":" + strconv.Itoa(widthBox) +
-						":" + strconv.Itoa(heightBox) +
-						":" + strconv.Itoa(lengthBox))
-				}
-
-				Log.Write(correctWeight, widthBox, heightBox, lengthBox)
-
-				time.Sleep(time.Second * 2)
-				rulerPort.SendRulerCommand([]byte{0x55, 0x55}, 0)
-			}
+			// выключаем диод на дуине
+			rulerPort.SendRulerCommand([]byte{0x55, 0x55}, 0)
 		}
 	}
 }

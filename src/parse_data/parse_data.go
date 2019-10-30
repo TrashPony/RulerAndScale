@@ -1,4 +1,4 @@
-package ParseData
+package parse_data
 
 func ParseScaleData(data []byte) (weightBox float64) {
 	/*
@@ -68,7 +68,7 @@ func ParseScaleData(data []byte) (weightBox float64) {
 	return
 }
 
-func ParseRulerData(data []byte, command []byte) (widthBox, heightBox, lengthBox int, weight bool) {
+func ParseRulerData(data []byte) (widthBox, heightBox, lengthBox int, weight bool) {
 
 	/*
 
@@ -86,16 +86,14 @@ func ParseRulerData(data []byte, command []byte) (widthBox, heightBox, lengthBox
 
 	*/
 
-	if command != nil && (command[0] == 0x88 || command[0] == 0x89) {
-		widthBox = rulerParse([]byte{data[0], data[1], data[2], data[3]}, 0x0B)    //ширина
-		heightBox = rulerParse([]byte{data[4], data[5], data[6], data[7]}, 0x16)   //высота
-		lengthBox = rulerParse([]byte{data[8], data[9], data[10], data[11]}, 0x21) //длина
+	widthBox = rulerParse([]byte{data[0], data[1], data[2], data[3]}, 0x0B)    //ширина
+	heightBox = rulerParse([]byte{data[4], data[5], data[6], data[7]}, 0x16)   //высота
+	lengthBox = rulerParse([]byte{data[8], data[9], data[10], data[11]}, 0x21) //длина
 
-		if data[12] == 0 {
-			weight = false
-		} else {
-			weight = true
-		}
+	if data[12] == 0 {
+		weight = false
+	} else {
+		weight = true
 	}
 
 	if widthBox > 200 {
@@ -113,7 +111,7 @@ func ParseRulerData(data []byte, command []byte) (widthBox, heightBox, lengthBox
 	return
 }
 
-func ParseRulerIndicationData(data []byte, command []byte) (left, right, top, back, wMax, tMax, lMax, widthBox, heightBox, lengthBox int, weight bool) {
+func ParseRulerIndicationData(data []byte) (left, right, top, back, wMax, tMax, lMax, widthBox, heightBox, lengthBox int, weight bool) {
 	// TODO это была не лучшая моя идея :D
 
 	left = rulerParse([]byte{data[0], data[1], data[2], data[3]}, 0x0B)

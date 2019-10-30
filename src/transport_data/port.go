@@ -1,17 +1,15 @@
-package TransportData
+package transport_data
 
 import (
 	"errors"
 	"github.com/jacobsa/go-serial/serial"
 	"io"
-	"sync"
 )
 
 type Port struct {
 	Name       string
 	Config     *serial.OpenOptions
 	Connection io.ReadWriteCloser
-	mx         sync.Mutex
 }
 
 func (p *Port) Reconnect(countRead int) error {
@@ -50,8 +48,11 @@ func (p *Port) ReadBytes(countRead int) ([]byte, error) {
 	n, err := p.Connection.Read(data)
 	if err != nil {
 		println("ошибка чтения: " + err.Error())
+		return nil, err
 	}
 
+	// countRead говорит сколько должно быть считано байт, если не удалось то это считается ошибкой
+	// нельзя использовать MinimumReadSize из конфига порта, т.к. если устройство не ответит это будет дедлок
 	if n == countRead {
 		return data, nil
 	} else {
