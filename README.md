@@ -2,6 +2,8 @@
 Модуль для весов на базе терминала TBS-A для измерения габаритов коробки, состоит из 4х датчиков HC-SR04 подключеных в 1 пин
 по этому [способу](http://www.instructables.com/id/Hack-an-HC-SR04-to-a-3-pin-sensor/)
 
+Версия на лазерных датчиках: https://github.com/TrashPony/RulerAndScale/tree/laser (работают лучше чем на звуковых)
+
 констранты которые необходимо указать:
 
 Arduino:
