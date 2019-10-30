@@ -10,7 +10,12 @@ import (
 
 func GetConfig() (int, int, int) {
 
-	_, err := os.OpenFile("../src/config/config", os.O_APPEND|os.O_WRONLY, 0600)
+	_, err := ioutil.ReadDir("../src/config")
+	if err != nil {
+		os.MkdirAll("../src/config", os.ModePerm)
+	}
+
+	_, err = os.OpenFile("../src/config/config", os.O_APPEND|os.O_WRONLY, 0600)
 	if err != nil {
 		os.Create("../src/config/config")
 	}
