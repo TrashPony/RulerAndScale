@@ -10,6 +10,7 @@ type Port struct {
 	Name       string
 	Config     *serial.OpenOptions
 	Connection io.ReadWriteCloser
+	Init       bool
 }
 
 func (p *Port) Reconnect(countRead int) error {

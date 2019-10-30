@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"github.com/TrashPony/RulerAndScale/config"
 	"github.com/TrashPony/RulerAndScale/parse_data"
 	"github.com/TrashPony/RulerAndScale/transport_data"
 	"github.com/gorilla/websocket"
@@ -129,18 +130,27 @@ func Reader(ws *websocket.Conn) {
 			rulerPort := transport_data.Ports.GetPort("ruler")
 			time.Sleep(500 * time.Millisecond)
 			rulerPort.SendRulerCommand([]byte{0x90, byte(msg.Count)}, 0)
+
+			_, width, length := config.GetConfig()
+			config.WriteConfig(msg.Count, width, length)
 		}
 
 		if msg.Event == "SetWidth" {
 			rulerPort := transport_data.Ports.GetPort("ruler")
 			time.Sleep(500 * time.Millisecond)
 			rulerPort.SendRulerCommand([]byte{0x91, byte(msg.Count)}, 0)
+
+			top, _, length := config.GetConfig()
+			config.WriteConfig(top, msg.Count, length)
 		}
 
 		if msg.Event == "SetLength" {
 			rulerPort := transport_data.Ports.GetPort("ruler")
 			time.Sleep(500 * time.Millisecond)
 			rulerPort.SendRulerCommand([]byte{0x92, byte(msg.Count)}, 0)
+
+			top, width, _ := config.GetConfig()
+			config.WriteConfig(top, width, msg.Count)
 		}
 
 		if msg.Event == "ResetRuler" {
@@ -149,6 +159,12 @@ func Reader(ws *websocket.Conn) {
 
 		if msg.Event == "ResetScale" {
 			transport_data.Ports.ResetPort("scale")
+		}
+
+		if msg.Event == "Calibration" {
+			rulerPort := transport_data.Ports.GetPort("ruler")
+			time.Sleep(500 * time.Millisecond)
+			rulerPort.SendRulerCommand([]byte{0x93, 0x93}, 0)
 		}
 	}
 }

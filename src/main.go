@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/TrashPony/RulerAndScale/config"
 	log2 "github.com/TrashPony/RulerAndScale/log"
 	"github.com/TrashPony/RulerAndScale/output_data"
 	"github.com/TrashPony/RulerAndScale/parse_data"
@@ -31,17 +32,23 @@ func main() {
 }
 
 func Controller() {
-	debug := false
+	clearBuffer := false
 
 	for {
 
 		scalePort := transport_data.Ports.GetPort("scale")
 		rulerPort := transport_data.Ports.GetPort("ruler")
 
+		if rulerPort != nil && !rulerPort.Init {
+			clearBuffer = true
+			SetSettings(rulerPort)
+			continue
+		}
+
 		// если на странице состояния наъходится кто либо то дабы избежать
 		// конкуретного доступа к стройствам ждем пока страницу закроют
 		if len(websocket.UsersWs) > 0 {
-			debug = true
+			clearBuffer = true
 			time.Sleep(1000 * time.Millisecond)
 			continue
 		}
@@ -52,8 +59,8 @@ func Controller() {
 		// очищаем буфер от сообщений отладки,
 		// т.к. там у сообщения больше байт
 		// все не считаные байты сделают сдвиг в будущих сообщения линейки
-		if debug {
-			debug = false
+		if clearBuffer {
+			clearBuffer = false
 			if scalePort != nil {
 				ioutil.ReadAll(scalePort.Connection)
 			}
@@ -142,6 +149,35 @@ func Controller() {
 
 			// выключаем диод на дуине
 			rulerPort.SendRulerCommand([]byte{0x55, 0x55}, 0)
+		}
+	}
+}
+
+func SetSettings(rulerPort *transport_data.Port) {
+	// выставляем настройки линейки
+	top, width, length := config.GetConfig()
+
+	rulerPort.SendRulerCommand([]byte{0x90, byte(top)}, 0)
+	time.Sleep(300 * time.Millisecond)
+	rulerPort.SendRulerCommand([]byte{0x91, byte(width)}, 0)
+	time.Sleep(300 * time.Millisecond)
+	rulerPort.SendRulerCommand([]byte{0x92, byte(length)}, 0)
+	time.Sleep(300 * time.Millisecond)
+
+	rulerResponse, err := rulerPort.SendRulerCommand([]byte{0x89, 0x89}, 41)
+
+	if err != nil && err.Error() != "wrong_data" {
+		println("Линейка отвалилась")
+		transport_data.Ports.ResetPort("ruler")
+		return
+	} else {
+		if rulerResponse != nil {
+			_, _, _, _, widthMax, heightMax, lengthMax, _, _, _, _ := parse_data.ParseRulerIndicationData(rulerResponse)
+			// обязательно проверяем установились значения или нет
+			if heightMax == top && widthMax == width && lengthMax == length {
+				println("линейка променила настройки.")
+				rulerPort.Init = true
+			}
 		}
 	}
 }

@@ -132,7 +132,8 @@
                     <tr>
                         <td><input type="button" value="Переподключить"
                                    onclick="ws.send(JSON.stringify({event: 'ResetRuler'}));"></td>
-                        <td></td>
+                        <td><input type="button" value="Калибровать"
+                                   onclick="ws.send(JSON.stringify({event: 'Calibration'}));"></td>
                     </tr>
                 </table>
             </div>
