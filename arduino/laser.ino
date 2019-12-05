@@ -76,7 +76,11 @@ boolean start = false;
 
 void loop() {
 
-  if (start) {
+  if (debug) {
+    Serial.print("Start programm");
+  }
+
+  if (start || debug) {
     Indication();
   }
 
@@ -97,7 +101,7 @@ void loop() {
       digitalWrite(RED_LED_PIN, LOW);
       digitalWrite(GREEN_LED_PIN, HIGH);
     }
-    //delay(500);
+    delay(500);
   }
 
   if (Serial.available()) {
